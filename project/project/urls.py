@@ -23,7 +23,9 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('ideas.urls', namespace='ideas')),
-    path('logout/', LogoutView.as_view(next_page='/login/'), name='logout'),
+    path('logout/', LogoutView.as_view(template_name='logged_out.html'), name='logout'),
+    # ensure accounts/logout/ (from included auth urls) also renders our template and accepts GET
+    path('accounts/logout/', LogoutView.as_view(template_name='logged_out.html'), name='accounts_logout'),
     path('accounts/', include('django.contrib.auth.urls')),  # login/logout/password
 ]
 
