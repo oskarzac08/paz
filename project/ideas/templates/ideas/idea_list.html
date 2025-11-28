@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Lista pomysłów</h1>
+<table>
+  <tr>
+    <th>Tytuł</th>
+    <th>Opis</th>
+    <th>Utworzono</th>
+    <th>Aktualizowano</th>
+    <th>Autor</th>
+  </tr>
+  {% for idea in ideas %}
+  <tr>
+    <td>{{ idea.id }}</td>
+    <td>{{ idea.title }}</td>
+    <td>
+      {{ idea.description }}
+      {% if idea.images.all %}
+        <div class="idea-images">
+          {% for img in idea.images.all %}
+            <figure class="idea-image-figure">
+              <img class="idea-image" src="{{ img.image.url }}" alt="{{ idea.title }}" loading="lazy" />
+              <figcaption class="idea-image-meta">
+                <small>
+                  {% if img.uploaded_by %}Załadował: {{ img.uploaded_by.username }}{% else %}Załadował: Nieznany{% endif %}
+                  &nbsp;•&nbsp;
+                  {{ img.uploaded_at|date:"Y-m-d H:i" }}
+                </small>
+              </figcaption>
+            </figure>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </td>
+    <td>{{ idea.created_at }}</td>
+    <td>{{ idea.updated_at }}</td>
+    <td>{% if idea.author %}{{ idea.author.username }}{% else %}Brak{% endif %}</td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="6">Brak pomysłów.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}
