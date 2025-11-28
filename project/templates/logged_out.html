@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div style="max-width: 600px; margin: 40px auto; text-align: center;">
+    <h2>Zostałeś wylogowany</h2>
+    <p>Co chcesz teraz zrobić?</p>
+    <p>
+      <a class="button" href="{% url 'login' %}" style="display:inline-block;margin:8px;padding:10px 16px;background:#35424a;color:#fff;text-decoration:none;border-radius:4px;">Zaloguj się</a>
+      <button onclick="window.close();" style="display:inline-block;margin:8px;padding:10px 16px;background:#888;color:#fff;border:none;border-radius:4px;">Zamknij okno</button>
+    </p>
+  </div>
+{% endblock %}
