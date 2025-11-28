@@ -125,3 +125,22 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/login/'
+
+# Email backend for development (prints emails to console)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'    
+# In production, configure a real email backend
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+# Use local-memory cache for session backend so sessions are stored in-memory
+# and will be cleared when the server/process restarts.
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'

@@ -16,12 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.contrib.auth.views import LogoutView
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('ideas.urls', namespace='ideas')),
+    path('logout/', LogoutView.as_view(next_page='/login/'), name='logout'),
+    path('accounts/', include('django.contrib.auth.urls')),  # login/logout/password
 ]
 
 if settings.DEBUG:
