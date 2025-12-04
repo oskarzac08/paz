@@ -130,6 +130,9 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
 
+# Activation link expiration in minutes
+ACTIVATION_LINK_EXPIRATION_MINUTES = 60
+
 # Email backend for development (prints emails to console)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'    
 # In production, configure a real email backend
@@ -144,3 +147,7 @@ CACHES = {
 }
 
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+
+
+# Activation link validity duration (in minutes)
+ACTIVATION_LINK_EXPIRATION_MINUTES = 3

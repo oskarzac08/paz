@@ -61,6 +61,33 @@
             color: #666;
             font-size: 0.85em;
         }
+        .button {
+            display: inline-block;
+            margin: 8px;
+            padding: 10px 16px;
+            background: #35424a;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+        }
+        /* messages styles */
+        .messages {
+            max-width: 900px;
+            margin: 16px auto;
+            padding: 0 16px;
+            color: #000;
+        }
+        .message {
+            background: #eef5ff;
+            border-left: 4px solid #35424a;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+        }
+        .message--activation {
+            color: #000;
+        }
     </style>
   </head>
   <body>
@@ -73,6 +100,17 @@
                   </form>
             {% else %}
                 | <a href="{% url 'login' %}">Zaloguj</a>
+                {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    {% if message|stringformat:'s' == 'Konto było już wcześniej aktywowane z tego linku.' %}
+                        <div class="message message--activation">{{ message }}</div>
+                    {% else %}
+                        <div class="message">{{ message }}</div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
             {% endif %}
         </nav>
     <main>
