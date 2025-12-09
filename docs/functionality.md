@@ -23,7 +23,6 @@
 3. Klient rejestruje się samodzielnie przez interfejs użytkownika
    1. Klient podaje podstawowe dane: imię, nazwisko, numer telefonu, adres e-mail
 
-
 ### Flow rejestracja użytkownika na usługę przez obsługę klienta
 
 - Obsługa klienta rejestruje użytkownika przez interfejs obsługi klienta
@@ -36,7 +35,7 @@
 
 - Odwoływanie przez użytkownika
 - Odwoływanie przez obsługę klienta
-- Potwierdzenie odwołania tylko w interfejsie użytkownika i u klienta i u obsługi
+- Potwierdzenie odwołania zarówno w interfejsie klienta, jak i w interfejsie obsługi klienta
 
 ### Flow klienta
 
@@ -57,6 +56,18 @@
 6. Wizyta powinna zostać zaznaczona jako odwołana w systemie
 7. Obsługa dostaje potwierdzenie o odwołaniu wizyty
 
-## Dodawanie usług
+## Dodawanie usług klienta
+
+- Nazwa (opis i zdjęcie) i cena
+- Czas trwania zależny od rodzaju usługi
+- Wybór dodatkowych opcji
+
+## Dodawanie usług obsługi klienta
+
+- Dodawnie nowych usług
+- Ustawianie czasu trwania usługi (np. 30 / 45 / 60 minut)
+- Ustawianie ceny usługi (dostępne tylko dla obsługi klienta)
+- Nadawanie koloru/ikony usłudze (łatwiejsze rozróżnianie w kalendarzu) - tylko obsługa klienta
+-
 
 ## Dodawanie terminów
