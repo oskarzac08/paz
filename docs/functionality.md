@@ -64,10 +64,10 @@
 
 ## Dodawanie usług obsługi klienta
 
-- Dodawnie nowych usług
+- Dodawnie nowych usług zdiec i opisów 
 - Ustawianie czasu trwania usługi (np. 30 / 45 / 60 minut)
-- Ustawianie ceny usługi (dostępne tylko dla obsługi klienta)
-- Nadawanie koloru/ikony usłudze (łatwiejsze rozróżnianie w kalendarzu) - tylko obsługa klienta
--
+- Ustawianie ceny usługi 
+- Nadawanie koloru/ikony usłudze (łatwiejsze rozróżnianie w kalendarzu)
+- usuwanie usług
 
 ## Dodawanie terminów
