@@ -64,10 +64,28 @@
 
 ## Dodawanie usług obsługi klienta
 
-- Dodawnie nowych usług zdiec i opisów 
+- Dodawnie nowych usług zdiec i opisów
 - Ustawianie czasu trwania usługi (np. 30 / 45 / 60 minut)
-- Ustawianie ceny usługi 
+- Ustawianie ceny usługi
 - Nadawanie koloru/ikony usłudze (łatwiejsze rozróżnianie w kalendarzu)
 - usuwanie usług
 
-## Dodawanie terminów
+
+## Dodawanie terminów klienta
+
+- Podgląd dostępnych terminów dla wybranej usługi
+- Filtrowanie terminów po dacie i/lub godzinie
+- Wybór konkretnego terminu wizyty
+- Podgląd swoich zaplanowanych wizyt (nadchodzące terminy)
+- Odwołanie wizyty w dozwolonym czasie (zgodnie z regulaminem)
+
+
+## Dodawanie terminów obsługi klienta
+
+- Dodawanie nowych terminów dla wybranych usług
+- Dodawanie cyklicznych terminów (np. pon–pt 9:00–17:00 co 30 minut)
+- Ustawianie godziny rozpoczęcia i czasu trwania terminu
+- Oznaczanie terminu jako dostępny / zajęty / zablokowany
+- Edycja istniejących terminów (zmiana godziny, usługi, limitu miejsc)
+- Usuwanie lub blokowanie terminów (np. urlop, niedostępność)
+- Kopiowanie terminów na kolejne dni lub tygodnie
