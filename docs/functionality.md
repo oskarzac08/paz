@@ -58,17 +58,19 @@
 
 ## Widok usług klienta
 
-- Nazwa (opis i zdjęcie) i cena
+- Nazwa
+- Opis
+- Zdjęcia
+- Cena
 - Czas trwania zależny od rodzaju usługi
-- Wybór dodatkowych opcji
 
 ## Dodawanie usług obsługi klienta
 
-- Dodawnie nowych usług zdiec i opisów
+- Dodawanie nowych usług (nazwa, opis i zdjęcia)
 - Ustawianie czasu trwania usługi (np. 30 / 45 / 60 minut)
 - Ustawianie ceny usługi
 - Nadawanie koloru/ikony usłudze (łatwiejsze rozróżnianie w kalendarzu)
-- usuwanie usług
+- Usuwanie usług
 
 ## Dodawanie terminów klienta
 
