@@ -22,6 +22,9 @@
 2. Akceptuje regulamin
 3. Klient rejestruje się samodzielnie przez interfejs użytkownika
    1. Klient podaje podstawowe dane: imię, nazwisko, numer telefonu, adres e-mail
+  2. Dostaje powiadomienie, gdzie został wysłany kod
+  3. Jeśli klient nie zdąży użyć kodu, kod zostanie oznaczony jako wygasły
+  4. Kod może zostać użyty lub pozostać nieużyty
 
 ### Flow rejestracja użytkownika na usługę przez obsługę klienta
 
@@ -30,6 +33,7 @@
 - Jeśli klient nie istnieje, możliwość założenia nowego konta podczas rejestracji na usługę
   - Obsługa podaje podstawowe dane: imię, nazwisko, numer telefonu, adres e-mail
 - Wysyłanie potwierdzenia rejestracji na e-mail/SMS
+
 
 ## Odwoływanie wizyty
 
@@ -54,23 +58,24 @@
 4. Potwierdza odwołanie wizyty
 5. Klient otrzymuje potwierdzenie odwołania wizyty na e-mail/SMS
 6. Wizyta powinna zostać zaznaczona jako odwołana w systemie
-7. Obsługa dostaje potwierdzenie o odwołaniu wizyty
+7. Zaznaczenie daty i godziny odwołania (opcjonalne)
+8. Obsługa dostaje potwierdzenie o odwołaniu wizyty
+9. Wybranie statusu wizyty (zaplanowana, odwołana, zrealizowana)
 
-## Widok usług klienta
+## Dodawanie usług klienta
 
-- Nazwa
-- Opis
-- Zdjęcia
-- Cena
+- Nazwa (opis i zdjęcie) i cena
 - Czas trwania zależny od rodzaju usługi
+- Wybór dodatkowych opcji
 
 ## Dodawanie usług obsługi klienta
 
-- Dodawanie nowych usług (nazwa, opis i zdjęcia)
-- Ustawianie czasu trwania usługi (np. 30 / 45 / 60 minut)
-- Ustawianie ceny usługi
-- Nadawanie koloru/ikony usłudze (łatwiejsze rozróżnianie w kalendarzu)
-- Usuwanie usług
+ - Dodawanie nowych usług, zdjęć i opisów
+ - Ustawianie czasu trwania usługi (np. 30 / 45 / 60 minut)
+ - Ustawianie ceny usługi
+ - Nadawanie koloru/ikony usłudze (łatwiejsze rozróżnianie w kalendarzu)
+ - Usuwanie usług
+
 
 ## Dodawanie terminów klienta
 
@@ -80,12 +85,13 @@
 - Podgląd swoich zaplanowanych wizyt (nadchodzące terminy)
 - Odwołanie wizyty w dozwolonym czasie (zgodnie z regulaminem)
 
+
 ## Dodawanie terminów obsługi klienta
 
 - Dodawanie nowych terminów dla wybranych usług
 - Dodawanie cyklicznych terminów (np. pon–pt 9:00–17:00 co 30 minut)
 - Ustawianie godziny rozpoczęcia i czasu trwania terminu
-- Oznaczanie terminu jako dostępny / zajęty / zablokowany
+- Status terminu (dostępny / zajęty / zablokowany).
 - Edycja istniejących terminów (zmiana godziny, usługi, limitu miejsc)
 - Usuwanie lub blokowanie terminów (np. urlop, niedostępność)
 - Kopiowanie terminów na kolejne dni lub tygodnie
