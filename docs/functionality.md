@@ -56,7 +56,7 @@
 6. Wizyta powinna zostać zaznaczona jako odwołana w systemie
 7. Obsługa dostaje potwierdzenie o odwołaniu wizyty
 
-## Dodawanie usług klienta
+## Widok usług klienta
 
 - Nazwa (opis i zdjęcie) i cena
 - Czas trwania zależny od rodzaju usługi
@@ -70,7 +70,6 @@
 - Nadawanie koloru/ikony usłudze (łatwiejsze rozróżnianie w kalendarzu)
 - usuwanie usług
 
-
 ## Dodawanie terminów klienta
 
 - Podgląd dostępnych terminów dla wybranej usługi
@@ -78,7 +77,6 @@
 - Wybór konkretnego terminu wizyty
 - Podgląd swoich zaplanowanych wizyt (nadchodzące terminy)
 - Odwołanie wizyty w dozwolonym czasie (zgodnie z regulaminem)
-
 
 ## Dodawanie terminów obsługi klienta
 
