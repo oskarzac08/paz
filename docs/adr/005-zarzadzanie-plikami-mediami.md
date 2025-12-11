@@ -35,7 +35,7 @@ from django.core.exceptions import ValidationError
 
 def validate_image_size(image):
     """Walidacja rozmiaru obrazu (max 5MB)"""
-    limit_mb = 5
+    limit_mb = 20
     if image.size > limit_mb * 1024 * 1024:
         raise ValidationError(f'Obraz jest zbyt duży. Max rozmiar: {limit_mb}MB')
 
