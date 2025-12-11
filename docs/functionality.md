@@ -21,8 +21,8 @@
 1. Użytkownik wybiera rodzaj usługi
 2. Akceptuje regulamin
 3. Klient rejestruje się samodzielnie przez interfejs użytkownika
-   1. Klient podaje podstawowe dane: imię, nazwisko, numer telefonu, adres e-mail
-  2. Dostaje powiadomienie, gdzie został wysłany kod
+   1. Klient podaje podstawowe dane: imię, nazwisko, numer telefonu, adres e-mail, preferowany sposób kontaktu
+  2. Dostaje powiadomienie z kodem
   3. Jeśli klient nie zdąży użyć kodu, kod zostanie oznaczony jako wygasły
   4. Kod może zostać użyty lub pozostać nieużyty
 
@@ -95,3 +95,8 @@
 - Edycja istniejących terminów (zmiana godziny, usługi, limitu miejsc)
 - Usuwanie lub blokowanie terminów (np. urlop, niedostępność)
 - Kopiowanie terminów na kolejne dni lub tygodnie
+
+## Edycja/odwoływanie terminów przez obsługe 
+
+- Już umuwiony termin nie może być edytowany
+- Już umuwiony termin może zostac tylko odwołany

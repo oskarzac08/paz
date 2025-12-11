@@ -11,7 +11,7 @@
 ## Model wizyty klienta
 
 - klient -> Model klienta
-- data i godzina wizyty
+- data i godzina wizyty -> Model terminu
 - rodzaj usługi -> Rodzaje usług
 - akceptacja regulaminu
 - data odwołania
@@ -30,16 +30,13 @@
 
 ## Model terminu
 
-- data
-- godzina rozpoczęcia
-- godzina zakończenia
+- data godzina rozpoczęcia
+- czas trwania
 - rodzaj usługi
 - status (dostępny / zajęty / zablokowany)
-- limit miejsc
-- liczba zajętych miejsc
 
 ## Model kodów weryfikacyjnych
-- kanał(SMS / e-mail) 
+- kanał (SMS / e-mail) 
 - kod
 - data wygaśnięcia
 - status kodu (użyty / nieużyty)
