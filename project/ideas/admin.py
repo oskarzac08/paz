@@ -1,11 +1,8 @@
 from django.contrib import admin
-from .models import Idea, IdeaImage
+from .models import Idea, IdeaImage, UserProfile, ActivationCode
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as DefaultUserAdmin
-from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
-
-from .models import UserProfile
 from django.contrib.auth.models import User
 
 
@@ -45,25 +42,24 @@ class IdeaAdmin(admin.ModelAdmin):
 		super().save_model(request, obj, form, change)
 
 
-
-# Inline for user profile to edit activation_date from User admin
+# Inline for user profile
 class UserProfileInline(admin.StackedInline):
 	model = UserProfile
 	can_delete = False
-	verbose_name_plural = _('profile')
+	verbose_name_plural = _('Profil użytkownika')
 	fk_name = 'user'
+	fields = ('phone_number', 'preferred_contact', 'email_verified', 'phone_verified', 'activation_date')
 	readonly_fields = ('activation_date',)
 
 
 class CustomUserAdmin(DefaultUserAdmin):
 	inlines = (UserProfileInline,)
-	list_display = DefaultUserAdmin.list_display + ('get_activation_date',)
+	list_display = DefaultUserAdmin.list_display + ('get_activation_date', 'get_email_verified', 'get_phone_verified')
 
 	def get_activation_date(self, obj):
 		try:
 			dt = obj.profile.activation_date
 			if dt:
-				# format as YYYY.MM.DD HH:MM
 				return dt.strftime('%Y.%m.%d %H:%M')
 			return '—'
 		except Exception:
@@ -71,7 +67,39 @@ class CustomUserAdmin(DefaultUserAdmin):
 	get_activation_date.short_description = 'Data aktywacji'
 	get_activation_date.admin_order_field = 'profile__activation_date'
 
-	# activation_date is set automatically during registration; do not allow manual setting here
+	def get_email_verified(self, obj):
+		try:
+			return obj.profile.email_verified
+		except:
+			return False
+	get_email_verified.short_description = 'E-mail zweryfikowany'
+	get_email_verified.boolean = True
+
+	def get_phone_verified(self, obj):
+		try:
+			return obj.profile.phone_verified
+		except:
+			return False
+	get_phone_verified.short_description = 'Telefon zweryfikowany'
+	get_phone_verified.boolean = True
+
+
+@admin.register(ActivationCode)
+class ActivationCodeAdmin(admin.ModelAdmin):
+	list_display = ('user', 'code', 'channel', 'created_at', 'expires_at', 'is_used', 'get_is_valid')
+	list_filter = ('channel', 'is_used', 'created_at')
+	search_fields = ('user__username', 'user__email', 'code')
+	readonly_fields = ('created_at', 'used_at', 'get_is_valid', 'get_is_expired')
+	
+	def get_is_valid(self, obj):
+		return obj.is_valid
+	get_is_valid.boolean = True
+	get_is_valid.short_description = 'Czy ważny'
+	
+	def get_is_expired(self, obj):
+		return obj.is_expired
+	get_is_expired.boolean = True
+	get_is_expired.short_description = 'Czy wygasł'
 
 
 # Unregister the default User admin and register the customized one

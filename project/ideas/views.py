@@ -3,16 +3,28 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login
 from django.views.generic import ListView
-from .models import Idea
+from django.views.decorators.csrf import ensure_csrf_cookie
+from .models import Idea, UserProfile
 from django.core.mail import send_mail
-from django.shortcuts import render, redirect
-from .forms import PolishUserCreationForm
+from django.shortcuts import render, redirect, get_object_or_404
+from django.middleware.csrf import get_token
+from .forms import PolishUserCreationForm, VerificationCodeForm, ResendCodeForm
 from django.contrib import messages
 from django.urls import reverse
 from django.utils import timezone
 
 from .models import ActivationCode
+from .services import VerificationService
+import logging
+
+logger = logging.getLogger(__name__)
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+from .utils import generate_code, store_code, verify_code
+from .mailing import send_verification_code
 
 
 class IdeaListView(LoginRequiredMixin, ListView):
@@ -28,76 +40,214 @@ def landing(request):
     return render(request, 'landing.html')
 
 
+@ensure_csrf_cookie
 def register_view(request):
+    """Rejestracja nowego użytkownika z weryfikacją dwukanałową"""
     if request.method == 'POST':
         form = PolishUserCreationForm(request.POST)
         if form.is_valid():
+            # Utwórz użytkownika (nieaktywnego)
             user = form.save(commit=False)
             user.email = form.cleaned_data['email']
-            # mark as inactive until activation
-            user.is_active = False
+            user.is_active = False  # Aktywacja po weryfikacji
             user.save()
-            # set activation_date on the user's profile automatically
-            try:
-                profile = user.profile
-                profile.activation_date = timezone.now()
-                profile.save()
-            except Exception:
-                pass
-
-            # create activation code and send mail
-            expires_at = timezone.now() + timedelta(minutes=settings.ACTIVATION_LINK_EXPIRATION_MINUTES)
-            activation_code = ActivationCode.objects.create(user=user, expires_at=expires_at)
-
-            activation_link = request.build_absolute_uri(
-                reverse('ideas:activate', args=[str(activation_code.uid)])
-            )
-            send_mail(
-                subject='Aktywacja konta',
-                message=(
-                    'Dziękujemy za rejestrację. Kliknij poniższy link, aby aktywować konto:\n'
-                    f'{activation_link}\n\n'
-                    f'Link jest ważny przez {settings.ACTIVATION_LINK_EXPIRATION_MINUTES} minut.'
-                ),
-                from_email=None,
-                recipient_list=[user.email],
-                fail_silently=True,
-            )
-
+            
+            # Pobierz lub utwórz profil użytkownika (sygnał post_save może już utworzyć profil)
+            profile, created = UserProfile.objects.get_or_create(user=user)
+            profile.phone_number = form.cleaned_data.get('phone_number', '')
+            profile.preferred_contact = form.cleaned_data.get('preferred_contact', 'email')
+            profile.save()
+            
+            # Wyślij kody weryfikacyjne według preferencji
+            channels_to_send = []
+            if profile.preferred_contact == 'email':
+                channels_to_send = ['email']
+            elif profile.preferred_contact == 'sms':
+                channels_to_send = ['sms']
+            else:  # both
+                channels_to_send = ['email', 'sms']
+            
+            codes_sent = []
+            for channel in channels_to_send:
+                activation_code = VerificationService.create_verification_code(user, channel)
+                if activation_code:
+                    if VerificationService.send_verification_code(user, channel, activation_code.code):
+                        codes_sent.append(channel)
+                        logger.info(f"Sent {channel} verification code to user {user.id}")
+            
+            # Zapisz user_id w sesji do weryfikacji
+            request.session['pending_verification_user_id'] = user.id
+            request.session['verification_channels'] = codes_sent
+            
             messages.success(
                 request,
-                'Konto utworzone. Sprawdź skrzynkę e-mail i kliknij link, aby aktywować konto.',
+                f'Konto utworzone. Kod weryfikacyjny wysłano na: {", ".join(codes_sent)}.'
             )
-            return redirect('ideas:login')
+            return redirect('ideas:verify_code')
     else:
         form = PolishUserCreationForm()
+
+    # Ensure a fresh CSRF token cookie is present when rendering the form
+    try:
+        get_token(request)
+    except Exception:
+        logger.exception('Failed to ensure CSRF token on register view')
+
     return render(request, 'register.html', {'form': form})
 
 
-def activate_account(request, uid):
+def dev_csrf_view(request):
+    """Development helper: return current CSRF token in plain text (DEBUG only)."""
+    from django.conf import settings
+    if not settings.DEBUG:
+        return redirect('ideas:landing')
+
+    token = get_token(request)
+    from django.http import JsonResponse
+    return JsonResponse({'csrftoken': token})
+
+
+def verify_code_view(request):
+    """Widok weryfikacji kodu"""
+    user_id = request.session.get('pending_verification_user_id')
+    if not user_id:
+        messages.error(request, 'Brak oczekującej weryfikacji.')
+        return redirect('ideas:register')
+    
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    
     try:
-        activation_code = ActivationCode.objects.select_related('user').get(uid=uid)
-    except ActivationCode.DoesNotExist:
-        messages.error(request, 'Link jest nieważny lub nie istnieje.')
-        return redirect('ideas:login')
+        user = User.objects.get(id=user_id)
+        profile = user.profile
+    except (User.DoesNotExist, UserProfile.DoesNotExist):
+        messages.error(request, 'Nieprawidłowa sesja weryfikacji.')
+        return redirect('ideas:register')
+    
+    if request.method == 'POST':
+        form = VerificationCodeForm(request.POST)
+        if form.is_valid():
+            code = form.cleaned_data['code']
+            
+            # Spróbuj zweryfikować kod dla każdego kanału
+            verified = False
+            for channel in ['email', 'sms']:
+                success, message = VerificationService.verify_code(user, code, channel)
+                if success:
+                    verified = True
+                    
+                    # Aktywuj użytkownika po pierwszej pomyślnej weryfikacji
+                    if not user.is_active:
+                        user.is_active = True
+                        user.save()
+                        profile.activation_date = timezone.now()
+                        profile.save()
+                    
+                    # Zaloguj użytkownika
+                    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                    
+                    # Wyczyść sesję
+                    if 'pending_verification_user_id' in request.session:
+                        del request.session['pending_verification_user_id']
+                    if 'verification_channels' in request.session:
+                        del request.session['verification_channels']
+                    
+                    messages.success(request, 'Weryfikacja zakończona pomyślnie! Witamy!')
+                    return redirect('ideas:idea_list')
+            
+            if not verified:
+                messages.error(request, 'Nieprawidłowy lub wygasły kod weryfikacyjny.')
+    else:
+        form = VerificationCodeForm()
+    
+    channels = request.session.get('verification_channels', [])
+    return render(request, 'verify_code.html', {
+        'form': form,
+        'user': user,
+        'channels': channels
+    })
 
-    if activation_code.is_used:
-        messages.info(request, 'Konto było już wcześniej aktywowane z tego linku.')
-        return redirect('ideas:login')
 
-    if timezone.now() > activation_code.expires_at:
-        messages.error(request, 'Link jest nieważny (upłynął czas na aktywację).')
-        return redirect('ideas:login')
+def resend_verification_code(request):
+    """Ponowne wysłanie kodu weryfikacyjnego"""
+    user_id = request.session.get('pending_verification_user_id')
+    if not user_id:
+        messages.error(request, 'Brak oczekującej weryfikacji.')
+        return redirect('ideas:register')
+    
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    
+    try:
+        user = User.objects.get(id=user_id)
+        profile = user.profile
+    except (User.DoesNotExist, UserProfile.DoesNotExist):
+        messages.error(request, 'Nieprawidłowa sesja weryfikacji.')
+        return redirect('ideas:register')
+    
+    if request.method == 'POST':
+        form = ResendCodeForm(request.POST)
+        if form.is_valid():
+            channel = form.cleaned_data['channel']
+            
+            # Sprawdź czy można wysłać kod (rate limiting)
+            if not VerificationService.can_send_code(user, channel):
+                messages.error(
+                    request,
+                    'Przekroczono limit wysłanych kodów. Spróbuj ponownie za godzinę.'
+                )
+                return redirect('ideas:verify_code')
+            
+            # Utwórz i wyślij nowy kod
+            activation_code = VerificationService.create_verification_code(user, channel)
+            if activation_code:
+                if VerificationService.send_verification_code(user, channel, activation_code.code):
+                    messages.success(request, f'Nowy kod wysłano na {channel}.')
+                else:
+                    messages.error(request, 'Błąd podczas wysyłania kodu.')
+            else:
+                messages.error(request, 'Nie można wysłać kodu. Spróbuj później.')
+            
+            return redirect('ideas:verify_code')
+    else:
+        form = ResendCodeForm()
+    
+    return render(request, 'resend_code.html', {'form': form, 'user': user})
 
-    user = activation_code.user
-    user.is_active = True
-    user.save(update_fields=['is_active'])
 
-    profile = getattr(user, 'profile', None)
-    if profile is not None:
-        profile.activation_date = timezone.now()
-        profile.save(update_fields=['activation_date'])
+@login_required
+def verification_status_view(request):
+    """Widok statusu weryfikacji użytkownika"""
+    try:
+        profile = request.user.profile
+    except UserProfile.DoesNotExist:
+        profile = UserProfile.objects.create(user=request.user)
+    
+    return render(request, 'verification_status.html', {'profile': profile})
 
-    activation_code.mark_used()
-    messages.success(request, 'Konto zostało pomyślnie aktywowane.')
-    return redirect('ideas:login')
+
+@require_POST
+def request_email_code(request):
+    email = request.POST.get('email', '').strip()
+    if not email:
+        return JsonResponse({'ok': False, 'error': 'Brak email'}, status=400)
+
+    code = generate_code(6)
+    store_code(email, code)
+    try:
+        send_verification_code(email, code)
+    except Exception:
+        logger.exception('Failed to send verification email')
+        return JsonResponse({'ok': False, 'error': 'Błąd wysyłania'}, status=500)
+
+    return JsonResponse({'ok': True})
+
+
+@require_POST
+def confirm_email_code(request):
+    email = request.POST.get('email', '').strip()
+    code = request.POST.get('code', '').strip()
+
+    if verify_code(email, code):
+        return JsonResponse({'ok': True})
+    return JsonResponse({'ok': False, 'error': 'Nieprawidłowy lub wygasły kod'}, status=400)
