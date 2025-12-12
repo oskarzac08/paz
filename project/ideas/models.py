@@ -4,8 +4,10 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-import uuid
 from django.utils import timezone
+import random
+import string
+
 
 
 def validate_file_size(value):
@@ -38,10 +40,24 @@ class IdeaImage(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='profile')
+    phone_number = models.CharField(max_length=15, blank=True)
+    preferred_contact = models.CharField(
+        max_length=10,
+        choices=[('email', 'E-mail'), ('sms', 'SMS'), ('both', 'Oba')],
+        default='email'
+    )
+    email_verified = models.BooleanField(default=False)
+    phone_verified = models.BooleanField(default=False)
     activation_date = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Profile for {self.user.username}"
+    
+    @property
+    def is_verified(self):
+        """Sprawdza czy użytkownik ma zweryfikowany przynajmniej jeden kanał"""
+        return self.email_verified or self.phone_verified
 
 
 @receiver(post_save, sender=get_user_model())
@@ -51,18 +67,41 @@ def create_user_profile(sender, instance, created, **kwargs):
 
 
 class ActivationCode(models.Model):
+    CHANNEL_CHOICES = [
+        ('sms', 'SMS'),
+        ('email', 'E-mail'),
+    ]
+    
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='activation_codes')
-    uid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    code = models.CharField(max_length=6, default='000000')
+    channel = models.CharField(max_length=10, choices=CHANNEL_CHOICES, default='email')
     expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
     used_at = models.DateTimeField(null=True, blank=True)
 
-    def __str__(self):
-        return f"Activation code for {self.user.username}"
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['code', 'channel']),
+            models.Index(fields=['expires_at']),
+        ]
 
+    def __str__(self):
+        return f"Code for {self.user.username} via {self.channel}"
+    
     @property
-    def is_used(self):
-        return self.used_at is not None
+    def is_expired(self):
+        """Sprawdza czy kod wygasł"""
+        return timezone.now() > self.expires_at
+    
+    @property
+    def is_valid(self):
+        """Sprawdza czy kod jest ważny (nie użyty i nie wygasły)"""
+        return not self.is_used and not self.is_expired
 
     def mark_used(self):
+        """Oznacza kod jako użyty"""
+        self.is_used = True
         self.used_at = timezone.now()
-        self.save(update_fields=['used_at'])
+        self.save(update_fields=['is_used', 'used_at'])

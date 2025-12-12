@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Weryfikacja konta{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white text-center">
+                    <i class="bi bi-envelope-check" style="font-size: 3rem;"></i>
+                    <h3 class="mb-0 mt-2">Sprawdź swoją skrzynkę!</h3>
+                </div>
+                <div class="card-body p-4">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <div class="alert alert-info border-info">
+                        <h5 class="alert-heading">
+                            <i class="bi bi-info-circle-fill"></i> Kod weryfikacyjny został wysłany!
+                        </h5>
+                        <hr>
+                        <p class="mb-2">
+                            Wysłaliśmy 6-cyfrowy kod weryfikacyjny na:
+                        </p>
+                        <ul class="mb-0">
+                            {% if 'email' in channels %}
+                                <li><strong><i class="bi bi-envelope"></i> Twój adres e-mail</strong> - sprawdź skrzynkę odbiorczą (oraz folder spam)</li>
+                            {% endif %}
+                            {% if 'sms' in channels %}
+                                <li><strong><i class="bi bi-phone"></i> Twój numer telefonu</strong> - kod powinien dotrzeć w ciągu kilku minut</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-shield-check"></i> Wprowadź kod weryfikacyjny</h5>
+                            <p class="card-text text-muted small mb-3">
+                                Po wprowadzeniu poprawnego kodu zostaniesz automatycznie zalogowany
+                            </p>
+                            
+                            <form method="post">
+                                {% csrf_token %}
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.code.id_for_label }}" class="form-label fw-bold">
+                                        {{ form.code.label }}
+                                    </label>
+                                    {{ form.code }}
+                                    {% if form.code.help_text %}
+                                        <small class="form-text text-muted d-block mt-1">{{ form.code.help_text }}</small>
+                                    {% endif %}
+                                    {% if form.code.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {% for error in form.code.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="bi bi-check-circle-fill"></i> Zweryfikuj i zaloguj
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="text-center mb-3">
+                        <p class="text-muted mb-2">
+                            <i class="bi bi-question-circle"></i> Nie otrzymałeś kodu?
+                        </p>
+                        <a href="{% url 'ideas:resend_code' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-arrow-repeat"></i> Wyślij kod ponownie
+                        </a>
+                    </div>
+
+                    <hr>
+
+                    <div class="row text-center small text-muted">
+                        <div class="col-md-6 mb-2">
+                            <i class="bi bi-clock-history"></i>
+                            <strong>Ważność:</strong> 24 godziny
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <i class="bi bi-shield-lock"></i>
+                            <strong>Bezpieczeństwo:</strong> Kod jednorazowy
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #id_code {
+        font-size: 2rem;
+        letter-spacing: 0.5rem;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}

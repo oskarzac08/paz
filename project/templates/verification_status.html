@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Status weryfikacji{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Status weryfikacji konta</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="bi bi-envelope"></i> E-mail
+                                    </h5>
+                                    <p class="mb-1"><strong>{{ user.email }}</strong></p>
+                                    {% if profile.email_verified %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle"></i> Zweryfikowany
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning">
+                                            <i class="bi bi-exclamation-circle"></i> Niezweryfikowany
+                                        </span>
+                                        <div class="mt-2">
+                                            <a href="{% url 'ideas:resend_code' %}" class="btn btn-sm btn-primary">
+                                                Wyślij kod weryfikacyjny
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="bi bi-phone"></i> Telefon
+                                    </h5>
+                                    {% if profile.phone_number %}
+                                        <p class="mb-1"><strong>{{ profile.phone_number }}</strong></p>
+                                        {% if profile.phone_verified %}
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle"></i> Zweryfikowany
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning">
+                                                <i class="bi bi-exclamation-circle"></i> Niezweryfikowany
+                                            </span>
+                                            <div class="mt-2">
+                                                <a href="{% url 'ideas:resend_code' %}" class="btn btn-sm btn-primary">
+                                                    Wyślij kod SMS
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    {% else %}
+                                        <p class="text-muted">Nie podano numeru telefonu</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert {% if profile.is_verified %}alert-success{% else %}alert-info{% endif %} mt-3">
+                        {% if profile.is_verified %}
+                            <i class="bi bi-check-circle"></i>
+                            <strong>Twoje konto jest zweryfikowane!</strong>
+                        {% else %}
+                            <i class="bi bi-info-circle"></i>
+                            Zweryfikuj swój e-mail lub telefon, aby w pełni korzystać z serwisu.
+                        {% endif %}
+                    </div>
+
+                    <div class="mt-3">
+                        <p><strong>Preferowany kanał kontaktu:</strong> 
+                            {% if profile.preferred_contact == 'email' %}
+                                E-mail
+                            {% elif profile.preferred_contact == 'sms' %}
+                                SMS
+                            {% else %}
+                                Oba kanały
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div class="mt-4">
+                        <a href="{% url 'ideas:idea_list' %}" class="btn btn-primary">
+                            <i class="bi bi-arrow-left"></i> Powrót
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
