@@ -10,6 +10,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import Idea, UserProfile
 from django.core.mail import send_mail
 from django.shortcuts import render, redirect, get_object_or_404
+from django.middleware.csrf import get_token
 from .forms import PolishUserCreationForm, VerificationCodeForm, ResendCodeForm
 from django.contrib import messages
 from django.urls import reverse
@@ -20,6 +21,10 @@ from .services import VerificationService
 import logging
 
 logger = logging.getLogger(__name__)
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
+from .utils import generate_code, store_code, verify_code
+from .mailing import send_verification_code
 
 
 class IdeaListView(LoginRequiredMixin, ListView):
@@ -81,8 +86,25 @@ def register_view(request):
             return redirect('ideas:verify_code')
     else:
         form = PolishUserCreationForm()
-    
+
+    # Ensure a fresh CSRF token cookie is present when rendering the form
+    try:
+        get_token(request)
+    except Exception:
+        logger.exception('Failed to ensure CSRF token on register view')
+
     return render(request, 'register.html', {'form': form})
+
+
+def dev_csrf_view(request):
+    """Development helper: return current CSRF token in plain text (DEBUG only)."""
+    from django.conf import settings
+    if not settings.DEBUG:
+        return redirect('ideas:landing')
+
+    token = get_token(request)
+    from django.http import JsonResponse
+    return JsonResponse({'csrftoken': token})
 
 
 def verify_code_view(request):
@@ -202,3 +224,30 @@ def verification_status_view(request):
         profile = UserProfile.objects.create(user=request.user)
     
     return render(request, 'verification_status.html', {'profile': profile})
+
+
+@require_POST
+def request_email_code(request):
+    email = request.POST.get('email', '').strip()
+    if not email:
+        return JsonResponse({'ok': False, 'error': 'Brak email'}, status=400)
+
+    code = generate_code(6)
+    store_code(email, code)
+    try:
+        send_verification_code(email, code)
+    except Exception:
+        logger.exception('Failed to send verification email')
+        return JsonResponse({'ok': False, 'error': 'Błąd wysyłania'}, status=500)
+
+    return JsonResponse({'ok': True})
+
+
+@require_POST
+def confirm_email_code(request):
+    email = request.POST.get('email', '').strip()
+    code = request.POST.get('code', '').strip()
+
+    if verify_code(email, code):
+        return JsonResponse({'ok': True})
+    return JsonResponse({'ok': False, 'error': 'Nieprawidłowy lub wygasły kod'}, status=400)

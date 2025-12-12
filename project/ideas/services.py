@@ -9,6 +9,7 @@ from django.template.loader import render_to_string
 from datetime import timedelta
 import random
 import logging
+from django.core.mail import get_connection, EmailMessage
 
 from .models import ActivationCode, UserProfile
 
@@ -167,22 +168,33 @@ Kod jest ważny przez 24 godziny.
 
 Jeśli nie rejestrowałeś się w naszym serwisie, zignoruj tę wiadomość.
 """
-            
+
+
             from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@example.com')
-            
-            send_mail(
-                subject,
-                message,
-                from_email,
-                [user.email],
-                fail_silently=False,
-            )
-            
-            logger.info(f"Verification email sent to {user.email}")
+
+            # Always log the email content to console for debugging
+            logger.debug(f"Preparing to send verification email to {user.email} from {from_email}")
+            logger.info("--- EMAIL (console) ---")
+            logger.info(f"To: {user.email}")
+            logger.info(f"From: {from_email}")
+            logger.info(f"Subject: {subject}")
+            logger.info(message)
+            logger.info("--- END EMAIL (console) ---")
+
+            # Attempt to send using configured EMAIL_BACKEND (SMTP in production)
+            try:
+                email = EmailMessage(subject, message, from_email, [user.email])
+                # Uses project's configured backend
+                connection = get_connection()
+                email.send(fail_silently=False)
+                logger.info(f"Verification email sent to {user.email} via backend {connection.__class__.__name__}")
+            except Exception:
+                logger.exception("Failed to send verification email via configured backend")
+
             return True
-            
-        except Exception as e:
-            logger.error(f"Failed to send verification email: {str(e)}")
+
+        except Exception:
+            logger.exception("Failed to send verification email")
             return False
 
 
@@ -204,23 +216,24 @@ class SMSVerificationBackend:
         try:
             profile = UserProfile.objects.get(user=user)
             phone_number = profile.phone_number
-            
+
             if not phone_number:
                 logger.warning(f"No phone number for user {user.id}")
                 return False
-            
+
             # TODO: Integracja z bramką SMS (np. Twilio, SMS API)
-            # Na potrzeby MVP logujemy kod
+            # Na potrzeby MVP logujemy kod i numer
             message = f"Twój kod weryfikacyjny: {code}. Ważny 24h."
-            
+
+            logger.debug(f"Preparing to send SMS to {phone_number} for user {user.id}")
             logger.info(f"SMS verification code to {phone_number}: {code}")
-            
+
             # Tymczasowo zwracamy True - w produkcji tutaj będzie prawdziwa wysyłka
             return True
-            
+
         except UserProfile.DoesNotExist:
-            logger.error(f"No profile found for user {user.id}")
+            logger.exception(f"No profile found for user {user.id}")
             return False
-        except Exception as e:
-            logger.error(f"Failed to send SMS: {str(e)}")
+        except Exception:
+            logger.exception("Failed to send SMS")
             return False
