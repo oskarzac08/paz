@@ -142,6 +142,16 @@ class Reservation(models.Model):
         ('pending', 'Oczekująca'),
         ('confirmed', 'Potwierdzona'),
         ('cancelled', 'Anulowana'),
+        ('completed', 'Zrealizowana'),
+        ('no_show', 'Nieobecność'),
+    ]
+    
+    CANCELLATION_REASON_CHOICES = [
+        ('change_plans', 'Zmiana planów'),
+        ('illness', 'Choroba'),
+        ('cannot_attend', 'Nie mogę się stawić'),
+        ('staff_cancelled', 'Odwołane przez salon'),
+        ('other', 'Inny powód'),
     ]
 
     service = models.ForeignKey(Service, on_delete=models.CASCADE, related_name='reservations', verbose_name='Usługa')
@@ -162,6 +172,27 @@ class Reservation(models.Model):
     is_guest = models.BooleanField(default=False, verbose_name='Rezerwacja gościa')
     confirmation_code = models.CharField(max_length=10, blank=True, db_index=True, verbose_name='Kod potwierdzenia')
     
+    # Cancellation details
+    cancelled_at = models.DateTimeField(null=True, blank=True, verbose_name='Data odwołania')
+    cancelled_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        null=True, 
+        blank=True, 
+        on_delete=models.SET_NULL, 
+        related_name='cancelled_reservations',
+        verbose_name='Odwołane przez'
+    )
+    cancelled_by_staff = models.BooleanField(default=False, verbose_name='Odwołane przez obsługę')
+    cancellation_reason = models.CharField(
+        max_length=50, 
+        choices=CANCELLATION_REASON_CHOICES, 
+        blank=True,
+        verbose_name='Powód odwołania'
+    )
+    cancellation_note = models.TextField(blank=True, verbose_name='Notatka odwołania')
+    cancellation_token = models.CharField(max_length=64, blank=True, db_index=True, unique=True, null=True, verbose_name='Token odwołania')
+    cancellation_token_expires = models.DateTimeField(null=True, blank=True, verbose_name='Token wygasa')
+    
     # Metadata
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Data utworzenia')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Data aktualizacji')
@@ -181,6 +212,69 @@ class Reservation(models.Model):
 
     def overlaps(self, start_dt, end_dt):
         return not (self.end <= start_dt or self.start >= end_dt)
+    
+    def generate_cancellation_token(self):
+        """Generuje unikalny token do odwołania wizyty"""
+        import secrets
+        from datetime import timedelta
+        
+        self.cancellation_token = secrets.token_urlsafe(32)
+        self.cancellation_token_expires = timezone.now() + timedelta(days=7)
+        self.save(update_fields=['cancellation_token', 'cancellation_token_expires'])
+        return self.cancellation_token
+    
+    def can_cancel(self, by_staff=False):
+        """Sprawdza czy wizyta może być odwołana"""
+        from datetime import timedelta
+        
+        # Nie można odwołać już odwołanej lub zrealizowanej wizyty
+        if self.status in ['cancelled', 'completed', 'no_show']:
+            return False, "Ta wizyta została już odwołana lub zrealizowana"
+        
+        # Nie można odwołać wizyty w przeszłości
+        if self.start < timezone.now():
+            return False, "Nie można odwołać wizyty, która już się odbyła"
+        
+        # Obsługa może odwołać w każdym momencie
+        if by_staff:
+            return True, ""
+        
+        # Klient musi odwołać minimum 24h przed
+        hours_until = (self.start - timezone.now()).total_seconds() / 3600
+        if hours_until < 24:
+            return False, f"Za późno na odwołanie. Musisz odwołać wizytę minimum 24 godziny przed terminem. Do wizyty pozostało: {int(hours_until)} godz."
+        
+        return True, ""
+    
+    def cancel(self, cancelled_by=None, by_staff=False, reason='', note=''):
+        """Odwołuje wizytę"""
+        can_cancel, message = self.can_cancel(by_staff=by_staff)
+        
+        if not can_cancel:
+            raise ValidationError(message)
+        
+        self.status = 'cancelled'
+        self.cancelled_at = timezone.now()
+        self.cancelled_by = cancelled_by
+        self.cancelled_by_staff = by_staff
+        self.cancellation_reason = reason
+        self.cancellation_note = note
+        self.save()
+        
+        return True
+    
+    @property
+    def hours_until_appointment(self):
+        """Zwraca liczbę godzin do wizyty"""
+        if self.start > timezone.now():
+            return (self.start - timezone.now()).total_seconds() / 3600
+        return 0
+    
+    @property
+    def can_cancel_deadline(self):
+        """Zwraca deadline do odwołania (24h przed)"""
+        from datetime import timedelta
+        return self.start - timedelta(hours=24)
 
 
 class TimeSlot(models.Model):

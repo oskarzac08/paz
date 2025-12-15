@@ -10,6 +10,7 @@ from .views import (
 )
 from . import views
 from . import booking_views
+from . import cancellation_views
 
 app_name = 'ideas'
 
@@ -36,6 +37,11 @@ urlpatterns = [
     path('rezerwacja/dane/', booking_views.booking_step4_auth, name='booking_step4_auth'),
     path('rezerwacja/potwierdzenie/', booking_views.booking_step5_confirm, name='booking_step5_confirm'),
     path('rezerwacja/sukces/<int:reservation_id>/', booking_views.booking_success, name='booking_success'),
+    # Cancellation flow
+    path('moje-wizyty/', cancellation_views.my_reservations, name='my_reservations'),
+    path('odwolaj/<int:reservation_id>/', cancellation_views.cancel_reservation, name='cancel_reservation'),
+    path('odwolaj/token/<str:token>/', cancellation_views.cancel_with_token, name='cancel_with_token'),
+    path('odwolaj/sukces/<int:reservation_id>/', cancellation_views.cancellation_success, name='cancellation_success'),
     # Old booking flow (deprecated)
     path('booking/service/', views.booking_step_service, name='booking_service'),
     path('booking/datetime/', views.booking_step_datetime, name='booking_datetime'),

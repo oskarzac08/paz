@@ -3,5 +3,17 @@ Twoja rezerwacja została potwierdzona.
 Usługa: {{ reservation.service.name }}
 Data: {{ reservation.start|date:'d.m.Y' }}
 Godzina: {{ reservation.start|time:'H:i' }} - {{ reservation.end|time:'H:i' }}
+Cena: {{ reservation.service.price }} PLN
+
+{% if reservation.cancellation_token %}
+Możesz odwołać wizytę do: {{ reservation.can_cancel_deadline|date:'d.m.Y, H:i' }}
+(24 godziny przed terminem)
+
+Aby odwołać wizytę, kliknij poniższy link:
+{{ request.scheme }}://{{ request.get_host }}{% url 'ideas:cancel_with_token' reservation.cancellation_token %}
+
+Lub zaloguj się do systemu:
+{{ request.scheme }}://{{ request.get_host }}{% url 'ideas:my_reservations' %}
+{% endif %}
 
 Dziękujemy!

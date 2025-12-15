@@ -1,0 +1,30 @@
+Klient odwołał wizytę
+
+{{ reservation.customer_first_name }} {{ reservation.customer_last_name }} odwołał wizytę:
+
+Usługa: {{ reservation.service.name }}
+Termin: {{ reservation.start|date:"d.m.Y, H:i" }}
+E-mail: {{ reservation.customer_email }}
+Telefon: {{ reservation.customer_phone }}
+
+{% if reservation.cancellation_reason %}
+Powód: {{ reservation.get_cancellation_reason_display }}
+{% endif %}
+
+{% if reservation.cancellation_note %}
+Notatka klienta: {{ reservation.cancellation_note }}
+{% endif %}
+
+Data odwołania: {{ reservation.cancelled_at|date:"d.m.Y, H:i" }}
+
+Do wizyty pozostało: {{ reservation.hours_until_appointment|floatformat:1 }} godz.
+
+---
+
+Slot jest teraz dostępny dla innych klientów.
+
+Zobacz szczegóły w systemie:
+{{ request.scheme }}://{{ request.get_host }}/admin/ideas/reservation/{{ reservation.id }}/change/
+
+---
+System Rezerwacji

@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Moje wizyty{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="mb-4">Moje wizyty</h1>
+    
+    {% if stats %}
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Wszystkie</h5>
+                    <p class="display-4">{{ stats.total }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Zrealizowane</h5>
+                    <p class="display-4 text-success">{{ stats.completed }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Odwołane</h5>
+                    <p class="display-4 text-warning">{{ stats.cancelled }}</p>
+                    <small class="text-muted">{{ stats.cancellation_rate|floatformat:0 }}%</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Nieobecności</h5>
+                    <p class="display-4 text-danger">{{ stats.no_show }}</p>
+                    <small class="text-muted">{{ stats.no_show_rate|floatformat:0 }}%</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Nadchodzące wizyty -->
+    <h2 class="mb-3">Nadchodzące wizyty</h2>
+    
+    {% if upcoming_reservations %}
+    <div class="row">
+        {% for reservation in upcoming_reservations %}
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ reservation.service.name }}</h5>
+                    <p class="card-text">
+                        <strong>Data:</strong> {{ reservation.start|date:"d.m.Y, H:i" }}<br>
+                        <strong>Czas trwania:</strong> {{ reservation.service.duration_minutes }} min<br>
+                        <strong>Cena:</strong> {{ reservation.service.price }} PLN<br>
+                        <strong>Status:</strong> 
+                        <span class="badge 
+                            {% if reservation.status == 'confirmed' %}bg-success
+                            {% elif reservation.status == 'pending' %}bg-warning
+                            {% endif %}">
+                            {{ reservation.get_status_display }}
+                        </span>
+                    </p>
+                    
+                    {% with can_cancel=reservation.can_cancel %}
+                    {% if can_cancel.0 %}
+                        <div class="alert alert-info">
+                            <small>
+                                <i class="bi bi-info-circle"></i> 
+                                Możesz odwołać do: {{ reservation.can_cancel_deadline|date:"d.m.Y, H:i" }}
+                            </small>
+                        </div>
+                        <a href="{% url 'ideas:cancel_reservation' reservation.id %}" class="btn btn-danger">
+                            <i class="bi bi-x-circle"></i> Odwołaj wizytę
+                        </a>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <small>
+                                <i class="bi bi-exclamation-triangle"></i> 
+                                {{ can_cancel.1 }}
+                            </small>
+                        </div>
+                        <p class="text-muted">
+                            <small>Aby odwołać tę wizytę, zadzwoń do salonu.</small>
+                        </p>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        Nie masz żadnych nadchodzących wizyt.
+        <a href="{% url 'ideas:booking_step1_service' %}" class="alert-link">Zarezerwuj wizytę</a>
+    </div>
+    {% endif %}
+    
+    <!-- Historia wizyt -->
+    <h2 class="mt-5 mb-3">Historia wizyt</h2>
+    
+    {% if past_reservations %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Usługa</th>
+                    <th>Data</th>
+                    <th>Status</th>
+                    <th>Szczegóły</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for reservation in past_reservations %}
+                <tr>
+                    <td>{{ reservation.service.name }}</td>
+                    <td>{{ reservation.start|date:"d.m.Y, H:i" }}</td>
+                    <td>
+                        {% if reservation.status == 'completed' %}
+                            <span class="badge bg-success">✓ Zrealizowana</span>
+                        {% elif reservation.status == 'cancelled' %}
+                            <span class="badge bg-warning">✗ Odwołana</span>
+                            {% if reservation.cancelled_by_staff %}
+                                <small class="text-muted">(przez salon)</small>
+                            {% else %}
+                                <small class="text-muted">({{ reservation.cancelled_at|timesince }} temu)</small>
+                            {% endif %}
+                        {% elif reservation.status == 'no_show' %}
+                            <span class="badge bg-danger">✗ Nieobecność</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if reservation.status == 'cancelled' and reservation.cancellation_reason %}
+                            <small class="text-muted">
+                                {{ reservation.get_cancellation_reason_display }}
+                            </small>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        Brak historii wizyt.
+    </div>
+    {% endif %}
+    
+    <div class="mt-4">
+        <a href="{% url 'ideas:booking_step1_service' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Zarezerwuj nową wizytę
+        </a>
+        <a href="{% url 'ideas:landing' %}" class="btn btn-secondary">
+            <i class="bi bi-house"></i> Strona główna
+        </a>
+    </div>
+</div>
+{% endblock %}

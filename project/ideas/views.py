@@ -48,11 +48,8 @@ def landing(request):
 
 
 def home(request):
-    """Root view: redirect authenticated users to ideas, guests to booking."""
-    if request.user.is_authenticated:
-        return redirect('ideas:idea_list')
-    # For guests, show booking directly
-    return redirect('ideas:booking_step1_service')
+    """Root view: redirect to landing page."""
+    return redirect('ideas:landing')
 
 
 @ensure_csrf_cookie

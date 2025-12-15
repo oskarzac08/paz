@@ -1,0 +1,29 @@
+Twoja wizyta została odwołana
+
+Usługa: {{ reservation.service.name }}
+Termin: {{ reservation.start|date:"d.m.Y, H:i" }}
+
+{% if cancelled_by_customer %}
+Wizyta została odwołana przez: Ciebie
+{% else %}
+Wizyta została odwołana przez: {{ reservation.service.name|default:"Salon" }}
+{% endif %}
+
+Data odwołania: {{ reservation.cancelled_at|date:"d.m.Y, H:i" }}
+
+{% if reservation.cancellation_reason %}
+Powód: {{ reservation.get_cancellation_reason_display }}
+{% endif %}
+
+{% if reservation.cancellation_note %}
+Notatka: {{ reservation.cancellation_note }}
+{% endif %}
+
+Chcesz umówić nową wizytę?
+Zarezerwuj ponownie: {{ request.scheme }}://{{ request.get_host }}{% url 'ideas:booking_step1_service' %}
+
+---
+Zespół {{ reservation.service.name|default:"Naszego Salonu" }}
+
+Jeśli masz pytania, skontaktuj się z nami:
+Email: {{ from_email }}

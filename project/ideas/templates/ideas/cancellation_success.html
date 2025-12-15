@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Wizyta odwołana{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0">
+                        <i class="bi bi-check-circle"></i> Wizyta została odwołana
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success">
+                        <h4>Potwierdzenie odwołania</h4>
+                        <p class="mb-0">
+                            Wysłaliśmy potwierdzenie na Twój e-mail: <strong>{{ reservation.customer_email }}</strong>
+                        </p>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title text-muted">Odwołana wizyta:</h5>
+                            <p class="card-text">
+                                <strong>Usługa:</strong> {{ reservation.service.name }}<br>
+                                <strong>Pierwotny termin:</strong> {{ reservation.start|date:"d.m.Y, H:i" }}<br>
+                                <strong>Data odwołania:</strong> {{ reservation.cancelled_at|date:"d.m.Y, H:i" }}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {% if suggested_slots %}
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Chcesz zarezerwować nowy termin?</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>Najbliższe dostępne terminy dla usługi <strong>{{ service.name }}</strong>:</p>
+                            
+                            <div class="list-group mb-3">
+                                {% for slot in suggested_slots %}
+                                <a href="{% url 'ideas:booking_step1_service' %}?service={{ service.id }}&date={{ slot.date|date:'Y-m-d' }}&time={{ slot.time }}" 
+                                   class="list-group-item list-group-item-action">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">
+                                            {{ slot.datetime|date:"l, d.m.Y" }}
+                                        </h6>
+                                        <strong>{{ slot.time }}</strong>
+                                    </div>
+                                    <small class="text-muted">
+                                        Czas trwania: {{ service.duration_minutes }} min • Cena: {{ service.price }} PLN
+                                    </small>
+                                </a>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'ideas:booking_step1_service' %}" class="btn btn-primary">
+                                    <i class="bi bi-calendar-plus"></i> Zobacz więcej terminów
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <p class="mb-0">
+                            Obecnie nie ma dostępnych terminów w najbliższych dniach.
+                            <a href="{% url 'ideas:booking_step1_service' %}" class="alert-link">
+                                Sprawdź kalendarz
+                            </a> aby znaleźć termin.
+                        </p>
+                    </div>
+                    {% endif %}
+                    
+                    <hr class="my-4">
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                        <a href="{% url 'ideas:my_reservations' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-list-ul"></i> Moje wizyty
+                        </a>
+                        <a href="{% url 'ideas:landing' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-house"></i> Strona główna
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6 class="card-title">Co dalej?</h6>
+                    <ul class="mb-0">
+                        <li>Slot został zwolniony i jest dostępny dla innych klientów</li>
+                        <li>Możesz zarezerwować nowy termin w dowolnym momencie</li>
+                        <li>W razie pytań, skontaktuj się z nami</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

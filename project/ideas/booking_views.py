@@ -293,13 +293,19 @@ def booking_step5_confirm(request):
             )
         else:
             # Registered user
+            # Safely get phone number from profile if it exists
+            try:
+                phone_number = request.user.profile.phone_number
+            except:
+                phone_number = ''
+            
             reservation = Reservation.objects.create(
                 service=service,
                 user=request.user,
                 customer_first_name=request.user.first_name,
                 customer_last_name=request.user.last_name,
                 customer_email=request.user.email,
-                customer_phone=getattr(request.user.profile, 'phone_number', ''),
+                customer_phone=phone_number,
                 start=start_dt,
                 end=end_dt,
                 status='confirmed',
@@ -375,6 +381,10 @@ def booking_success(request, reservation_id):
     except Reservation.DoesNotExist:
         messages.error(request, 'Rezerwacja nie znaleziona.')
         return redirect('ideas:home')
+    
+    # Generuj token odwołania jeśli jeszcze nie ma
+    if not reservation.cancellation_token:
+        reservation.generate_cancellation_token()
     
     return render(request, 'ideas/booking/success.html', {
         'reservation': reservation

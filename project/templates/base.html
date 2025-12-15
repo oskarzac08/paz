@@ -11,15 +11,56 @@
             background-color: #f4f4f4;
         }
         nav {
-            background-color: #35424a;
-            color: #ffffff;
-            padding: 10px 0;
-            text-align: center;
+            background-color: #ffffff;
+            color: #333;
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        nav a {
-            color: #ffffff;
-            margin: 0 15px;
+        .nav-logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
             text-decoration: none;
+        }
+        .nav-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+        .nav-menu-label {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 8px;
+            text-transform: lowercase;
+        }
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+        .nav-links a {
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+        .nav-links a:hover {
+            color: #666;
+        }
+        .nav-button {
+            background-color: #000;
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .nav-button:hover {
+            background-color: #333;
         }
         main {
             padding: 20px;
@@ -80,27 +121,153 @@
             color: #000;
         }
         .message {
-            background: #eef5ff;
-            border-left: 4px solid #35424a;
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
             padding: 10px 12px;
             margin-bottom: 8px;
+            border-radius: 4px;
         }
         .message--activation {
             color: #000;
+        }
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .nav-links {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
+        
+        /* Footer Styles */
+        footer {
+            background-color: #f9f9f9;
+            border-top: 1px solid #e0e0e0;
+            padding: 60px 40px 20px;
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        
+        .footer-logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .footer-address {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.8;
+        }
+        
+        .footer-column h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .footer-column ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+        
+        .footer-column ul li a {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+        
+        .footer-column ul li a:hover {
+            color: #000;
+        }
+        
+        .footer-social {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .footer-social a {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .footer-social a:hover {
+            background-color: #333;
+            color: #fff;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 14px;
+            color: #999;
+        }
+        
+        @media (max-width: 768px) {
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
         }
     </style>
   </head>
   <body>
         <nav>
-            <a href="{% url 'ideas:home' %}">Strona główna</a> | <a href="/admin/">Admin</a>
+            <a href="{% url 'ideas:home' %}" class="nav-logo">Logo</a>
+            
+            <div class="nav-center">
+                <div class="nav-menu-label">menu</div>
+                <div class="nav-links">
+                    <a href="#cennik">Cennik</a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'ideas:my_reservations' %}">Moje wizyty</a>
+                        <a href="/admin/">Admin</a>
+                    {% endif %}
+                    <a href="{% url 'ideas:login' %}">Logowanie</a>
+                    <a href="{% url 'ideas:register' %}">Rejestracja</a>
+                </div>
+            </div>
+            
             {% if user.is_authenticated %}
-                | <form method="post" action="{% url 'logout' %}" style="display:inline">
+                <form method="post" action="{% url 'logout' %}" style="display:inline">
                     {% csrf_token %}
-                    <button type="submit" style="background:none;border:none;color:#ffffff;cursor:pointer;padding:0;margin:0;text-decoration:underline;">Wyloguj</button>
-                  </form>
+                    <button type="submit" class="nav-button">Wyloguj</button>
+                </form>
             {% else %}
-                | <a href="{% url 'login' %}">Zaloguj</a>
-                {% if messages %}
+                <a href="{% url 'ideas:booking_step1_service' %}" class="nav-button">Rezerwacja</a>
+            {% endif %}
+        </nav>
+        
+        {% if messages %}
             <div class="messages">
                 {% for message in messages %}
                     {% if message|stringformat:'s' == 'Konto było już wcześniej aktywowane z tego linku.' %}
@@ -111,10 +278,75 @@
                 {% endfor %}
             </div>
         {% endif %}
-            {% endif %}
-        </nav>
+        
     <main>
         {% block content %}{% endblock %}
     </main>
+    
+    <footer style="background-color: #222; color: #ccc; padding: 60px 40px 20px;">
+        <div style="max-width: 1400px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr 1fr 2fr; gap: 40px;">
+            <!-- Logo & Description -->
+            <div>
+                <h3 style="font-size: 24px; font-weight: 300; margin: 0 0 20px 0; color: #fff;">Salon</h3>
+                <p style="font-size: 14px; line-height: 1.6; margin: 0;">
+                    Profesjonalne usługi<br>
+                    fryzjerskie i kosmetyczne<br>
+                    w sercu miasta.
+                </p>
+            </div>
+            
+            <!-- Address & Contact -->
+            <div>
+                <h4 style="font-size: 16px; font-weight: 400; margin: 0 0 20px 0; color: #fff; text-transform: uppercase;">Kontakt</h4>
+                <p style="font-size: 14px; line-height: 1.8; margin: 0;">
+                    ul. Przykładowa 123<br>
+                    00-000 Warszawa<br><br>
+                    Tel: +48 123 456 789<br>
+                    Email: kontakt@salon.pl
+                </p>
+            </div>
+            
+            <!-- Quick Links -->
+            <div>
+                <h4 style="font-size: 16px; font-weight: 400; margin: 0 0 20px 0; color: #fff; text-transform: uppercase;">Przydatne linki</h4>
+                <ul style="list-style: none; padding: 0; margin: 0;">
+                    <li style="margin-bottom: 10px;">
+                        <a href="{% url 'ideas:my_reservations' %}" style="color: #ccc; text-decoration: none; font-size: 14px; transition: color 0.3s;">Odwołaj wizytę</a>
+                    </li>
+                    <li style="margin-bottom: 10px;">
+                        <a href="{% url 'ideas:booking_step1_service' %}" style="color: #ccc; text-decoration: none; font-size: 14px; transition: color 0.3s;">Zarezerwuj wizytę</a>
+                    </li>
+                </ul>
+                <h4 style="font-size: 16px; font-weight: 400; margin: 20px 0 15px 0; color: #fff; text-transform: uppercase;">Social Media</h4>
+                <div style="display: flex; gap: 15px;">
+                    <a href="#" style="color: #ccc; font-size: 24px; transition: color 0.3s;">📘</a>
+                    <a href="#" style="color: #ccc; font-size: 24px; transition: color 0.3s;">📷</a>
+                    <a href="#" style="color: #ccc; font-size: 24px; transition: color 0.3s;">🎵</a>
+                </div>
+            </div>
+            
+            <!-- Map -->
+            <div>
+                <h4 style="font-size: 16px; font-weight: 400; margin: 0 0 20px 0; color: #fff; text-transform: uppercase;">Lokalizacja</h4>
+                <div style="border-radius: 8px; overflow: hidden; height: 250px;">
+                    <iframe 
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2443.2890569729673!2d21.01223931583698!3d52.22977797975763!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x471ecc669a869f01%3A0x72f0be2a88ead3fc!2sPa%C5%82ac%20Kultury%20i%20Nauki!5e0!3m2!1spl!2spl!4v1234567890123!5m2!1spl!2spl" 
+                        width="100%" 
+                        height="250" 
+                        style="border:0; display: block;" 
+                        allowfullscreen="" 
+                        loading="lazy">
+                    </iframe>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Copyright -->
+        <div style="max-width: 1400px; margin: 40px auto 0; padding-top: 20px; border-top: 1px solid #444; text-align: center;">
+            <p style="font-size: 14px; color: #888; margin: 0;">
+                &copy; 2024 Salon. Wszelkie prawa zastrzeżone.
+            </p>
+        </div>
+    </footer>
   </body>
 </html>

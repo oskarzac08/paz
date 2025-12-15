@@ -1,12 +1,405 @@
 {% extends 'base.html' %}
 
+{% block title %}Strona główna - Salon{% endblock %}
+
 {% block content %}
-  <div style="max-width:600px;margin:40px auto;text-align:center;">
-    <h1>Witaj na stronie pomysłów</h1>
-    <p>Przed zalogowaniem możesz się zalogować lub zarejestrować nowe konto.</p>
+<style>
+  main {
+    padding: 0 !important;
+  }
+  
+  /* Hero Section */
+  .hero-section {
+    position: relative;
+    height: 600px;
+    background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), 
+                url('https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200') center/cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-align: center;
+  }
+  
+  .hero-content h1 {
+    font-size: 52px;
+    font-weight: 300;
+    margin: 0 0 20px 0;
+    letter-spacing: 2px;
+  }
+  
+  .hero-content p {
+    font-size: 20px;
+    margin: 0 0 30px 0;
+  }
+  
+  .hero-button {
+    background-color: #000;
+    color: #fff;
+    padding: 15px 40px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 16px;
+    display: inline-block;
+    transition: background-color 0.3s;
+  }
+  
+  .hero-button:hover {
+    background-color: #333;
+  }
+  
+  /* About Section */
+  .about-section {
+    padding: 80px 40px;
+    background-color: #fff;
+    text-align: center;
+  }
+  
+  .about-section h2 {
+    font-size: 36px;
+    font-weight: 300;
+    margin: 0 0 30px 0;
+    letter-spacing: 1px;
+  }
+  
+  .about-content {
+    max-width: 800px;
+    margin: 0 auto;
+    font-size: 16px;
+    line-height: 1.8;
+    color: #666;
+  }
+  
+  /* Pricing Section */
+  .pricing-section {
+    padding: 80px 40px;
+    background-color: #f9f9f9;
+  }
+  
+  .pricing-section h2 {
+    font-size: 36px;
+    font-weight: 300;
+    margin: 0 0 50px 0;
+    letter-spacing: 1px;
+    text-align: center;
+    text-transform: uppercase;
+  }
+  
+  .pricing-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 40px;
+  }
+  
+  .pricing-category {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  .pricing-category h3 {
+    font-size: 24px;
+    font-weight: 400;
+    margin: 0 0 20px 0;
+    color: #c9a961;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  
+  .pricing-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px dotted #ddd;
+  }
+  
+  .pricing-item:last-child {
+    border-bottom: none;
+  }
+  
+  .service-name {
+    font-size: 15px;
+    color: #333;
+  }
+  
+  .service-description {
+    font-size: 13px;
+    color: #999;
+    display: block;
+    margin-top: 4px;
+  }
+  
+  .service-price {
+    font-size: 16px;
+    font-weight: 600;
+    color: #c9a961;
+  }
+  
+  /* Booking Section */
+  .booking-section {
+    padding: 80px 40px;
+    background-color: #fff;
+    text-align: center;
+  }
+  
+  .booking-section h2 {
+    font-size: 36px;
+    font-weight: 300;
+    margin: 0 0 20px 0;
+    letter-spacing: 1px;
+  }
+  
+  .booking-section p {
+    font-size: 16px;
+    color: #666;
+    max-width: 600px;
+    margin: 0 auto 30px;
+    line-height: 1.6;
+  }
+  
+  .booking-button {
+    background-color: #c9a961;
+    color: #fff;
+    padding: 15px 50px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 16px;
+    display: inline-block;
+    transition: background-color 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  
+  .booking-button:hover {
+    background-color: #b89751;
+  }
+  
+  /* Reviews Section */
+  .reviews-section {
+    padding: 80px 40px;
+    background-color: #f9f9f9;
+  }
+  
+  .reviews-section h2 {
+    font-size: 36px;
+    font-weight: 300;
+    margin: 0 0 40px 0;
+    letter-spacing: 1px;
+    text-align: center;
+  }
+  
+  .reviews-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+  }
+  
+  .review-item {
+    padding: 30px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  .review-rating {
+    color: #ffd700;
+    margin: 0 0 15px 0;
+    font-size: 18px;
+  }
+  
+  .review-text {
+    font-size: 15px;
+    font-style: italic;
+    color: #555;
+    margin: 0 0 20px 0;
+    line-height: 1.6;
+  }
+  
+  .review-author {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .review-source {
+    font-size: 12px;
+    color: #999;
+    margin-top: 5px;
+  }
+</style>
+
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="hero-content">
+    <h1>Witaj w naszym salonie</h1>
+    <p>Profesjonalne usługi fryzjerskie i kosmetyczne</p>
+    <a href="#rezerwacja" class="hero-button">Umów wizytę</a>
+  </div>
+</section>
+
+<!-- About Section -->
+<section class="about-section">
+  <h2>O naszym salonie</h2>
+  <div class="about-content">
     <p>
-      <a href="{% url 'ideas:login' %}" style="display:inline-block;margin:8px;padding:10px 16px;background:#35424a;color:#fff;text-decoration:none;border-radius:4px;">Zaloguj się</a>
-      <a href="{% url 'ideas:register' %}" style="display:inline-block;margin:8px;padding:10px 16px;background:#28a745;color:#fff;text-decoration:none;border-radius:4px;">Zarejestruj się</a>
+      Jesteśmy profesjonalnym salonem fryzjersko-kosmetycznym z wieloletnim doświadczeniem. 
+      Nasz zespół to wykwalifikowani specjaliści, którzy regularnie podnoszą swoje kwalifikacje, 
+      śledząc najnowsze trendy w branży beauty. Oferujemy szeroki wachlarz usług, 
+      od klasycznych strzyżeń po zaawansowane zabiegi pielęgnacyjne. 
+      Dbamy o indywidualne podejście do każdego klienta, 
+      gwarantując profesjonalną obsługę w przyjaznej atmosferze.
     </p>
   </div>
+</section>
+
+<!-- Pricing Section -->
+<section id="cennik" class="pricing-section">
+  <h2>Cennik</h2>
+  <div class="pricing-content">
+    <div class="pricing-category">
+      <h3>Manicure</h3>
+      <div class="pricing-item">
+        <div>
+          <span class="service-name">Manicure Higieniczny</span>
+        </div>
+        <span class="service-price">100+ zł</span>
+      </div>
+      <div class="pricing-item">
+        <div>
+          <span class="service-name">Manicure Japoński</span>
+          <span class="service-description">Ściągnięcie żelu/hybrydy po innym salonie + 20 zł do ceny</span>
+        </div>
+        <span class="service-price">130 zł</span>
+      </div>
+      <div class="pricing-item">
+        <div>
+          <span class="service-name">Manicure Hybrydowy</span>
+          <span class="service-description">Jeden Kolor<br>French / Babyboomer / Ombre + 20 zł</span>
+        </div>
+        <span class="service-price">150 zł</span>
+      </div>
+      <div class="pricing-item">
+        <div>
+          <span class="service-name">Manicure Żelowy</span>
+          <span class="service-description">Jeden Kolor<br>French / Babyboomer / Ombre + 20 zł</span>
+        </div>
+        <span class="service-price">170+ zł</span>
+      </div>
+    </div>
+    
+    <div class="pricing-category">
+      <h3>Pedicure</h3>
+      <div class="pricing-item">
+        <div>
+          <span class="service-name">Pedicure higieniczny</span>
+        </div>
+        <span class="service-price">150 zł</span>
+      </div>
+      <div class="pricing-item">
+        <div>
+          <span class="service-name">Pedicure hybrydowy tylko palce</span>
+        </div>
+        <span class="service-price">150 zł</span>
+      </div>
+      <div class="pricing-item">
+        <div>
+          <span class="service-name">Pedicure hybrydowy + stopa</span>
+        </div>
+        <span class="service-price">190+ zł</span>
+      </div>
+    </div>
+    
+    <div class="pricing-category">
+      <h3>Przedłużanie / Uzupełnienie</h3>
+      <div class="pricing-item">
+        <div>
+          <span class="service-name">Przedłużanie Paznokci Żelem</span>
+          <span class="service-description">Jeden Kolor<br>French / Babyboomer / Ombre + 20 zł</span>
+        </div>
+        <span class="service-price">200+ zł</span>
+      </div>
+      <div class="pricing-item">
+        <div>
+          <span class="service-name">Uzupełnienie Paznokci Żelowych</span>
+          <span class="service-description">Jeden Kolor<br>French / Babyboomer / Ombre + 20 zł</span>
+        </div>
+        <span class="service-price">180+ zł</span>
+      </div>
+    </div>
+    
+    <div class="pricing-category">
+      <h3>Dodatkowe Usługi</h3>
+      <div class="pricing-item">
+        <div>
+          <span class="service-name">Naprawa paznokci</span>
+          <span class="service-description">po nieprawidłowej stylizacji w innym salonie</span>
+        </div>
+        <span class="service-price">+20 zł</span>
+      </div>
+      <div class="pricing-item">
+        <div>
+          <span class="service-name">Ściągnięcie żelu</span>
+          <span class="service-description">Bez opracowania płytki paznokcia<br>Z opracowaniem płytki i skórek + 40 zł</span>
+        </div>
+        <span class="service-price">45 zł</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Booking Section -->
+<section id="rezerwacja" class="booking-section">
+  <h2>Zarezerwuj wizytę</h2>
+  <p>
+    Umów się online w kilka chwil! Wybierz dogodny termin i usługę, 
+    a my zadbamy o resztę. Rezerwacja jest szybka, wygodna i dostępna 24/7.
+  </p>
+  <a href="{% url 'ideas:booking_step1_service' %}" class="booking-button">Zarezerwuj teraz</a>
+</section>
+
+<!-- Reviews Section -->
+<section class="reviews-section">
+  <h2>Opinie Google</h2>
+  <div class="reviews-content">
+    <div class="review-item">
+      <div class="review-rating">★★★★★</div>
+      <p class="review-text">"Rewelacyjna obsługa i profesjonalne podejście. Salon na najwyższym poziomie! Polecam każdemu, kto szuka jakości i profesjonalizmu."</p>
+      <p class="review-author">Anna Kowalska</p>
+      <p class="review-source">Google Reviews</p>
+    </div>
+    <div class="review-item">
+      <div class="review-rating">★★★★★</div>
+      <p class="review-text">"Bardzo wygodny system rezerwacji online. W końcu mogę umówić się bez dzwonienia. Świetny pomysł!"</p>
+      <p class="review-author">Marek Wiśniewski</p>
+      <p class="review-source">Google Reviews</p>
+    </div>
+    <div class="review-item">
+      <div class="review-rating">★★★★★</div>
+      <p class="review-text">"Najlepszy salon w mieście. Zawsze wychodzę zadowolona. Specjalistki są bardzo miłe i kompetentne."</p>
+      <p class="review-author">Ewa Nowak</p>
+      <p class="review-source">Google Reviews</p>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Smooth scroll do sekcji
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    });
+  });
+</script>
 {% endblock %}

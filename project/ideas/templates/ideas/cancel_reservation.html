@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Odwołanie wizyty{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="mb-0">Odwołanie wizyty</h3>
+                </div>
+                <div class="card-body">
+                    {% if not can_cancel %}
+                        <div class="alert alert-danger">
+                            <h4><i class="bi bi-exclamation-triangle"></i> Nie można odwołać wizyty</h4>
+                            <p>{{ error_message }}</p>
+                            <p class="mb-0">
+                                <small>Aby odwołać tę wizytę, skontaktuj się z nami telefonicznie.</small>
+                            </p>
+                        </div>
+                        <a href="{% url 'ideas:my_reservations' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Powrót do moich wizyt
+                        </a>
+                    {% else %}
+                        <h4>Czy na pewno chcesz odwołać tę wizytę?</h4>
+                        
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ reservation.service.name }}</h5>
+                                <p class="card-text">
+                                    <strong>Data:</strong> {{ reservation.start|date:"d.m.Y, H:i" }}<br>
+                                    <strong>Czas trwania:</strong> {{ reservation.service.duration_minutes }} min<br>
+                                    <strong>Cena:</strong> {{ reservation.service.price }} PLN
+                                </p>
+                            </div>
+                        </div>
+                        
+                        {% if hours_until < 48 %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-clock"></i> 
+                            <strong>Do wizyty pozostało: {{ hours_until|floatformat:0 }} godzin</strong><br>
+                            {% if hours_until >= 24 %}
+                                Możesz odwołać bez konsekwencji.
+                            {% else %}
+                                Uwaga: Masz mniej niż 24 godziny przed wizytą.
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Powód odwołania:</strong></label>
+                                {% for choice in form.reason %}
+                                    <div class="form-check">
+                                        {{ choice.tag }}
+                                        <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                            {{ choice.choice_label }}
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                                {% if form.reason.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.reason.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form.note.label_tag }}
+                                {{ form.note }}
+                                {% if form.note.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.note.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <small>
+                                    <i class="bi bi-envelope"></i> 
+                                    Po odwołaniu wyślemy potwierdzenie na adres: <strong>{{ reservation.customer_email }}</strong>
+                                </small>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{% url 'ideas:my_reservations' %}" class="btn btn-secondary">
+                                    Anuluj
+                                </a>
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="bi bi-x-circle"></i> Potwierdź odwołanie
+                                </button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if can_cancel %}
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6 class="card-title">Informacje o odwoływaniu wizyt</h6>
+                    <ul class="small text-muted mb-0">
+                        <li>Wizyty można odwołać do 24 godzin przed terminem</li>
+                        <li>Po odwołaniu slot będzie dostępny dla innych klientów</li>
+                        <li>Możesz zarezerwować nowy termin po odwołaniu</li>
+                        <li>Otrzymasz potwierdzenie e-mailem</li>
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-check-input {
+        margin-top: 0.3em;
+    }
+</style>
+{% endblock %}

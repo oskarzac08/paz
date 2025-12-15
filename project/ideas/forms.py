@@ -289,3 +289,33 @@ class ReservationConfirmForm(forms.Form):
         if not v:
             raise forms.ValidationError('Musisz zaakceptować regulamin')
         return v
+
+
+class CancellationForm(forms.Form):
+    """Formularz odwoływania wizyty"""
+    REASON_CHOICES = [
+        ('change_plans', 'Zmiana planów'),
+        ('illness', 'Choroba'),
+        ('cannot_attend', 'Nie mogę się stawić'),
+        ('other', 'Inny powód'),
+    ]
+    
+    reason = forms.ChoiceField(
+        label='Powód odwołania',
+        choices=REASON_CHOICES,
+        required=True,
+        widget=forms.RadioSelect,
+        error_messages={
+            'required': 'Wybierz powód odwołania.',
+        }
+    )
+    
+    note = forms.CharField(
+        label='Dodatkowe informacje (opcjonalnie)',
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control', 
+            'rows': 3, 
+            'placeholder': 'Możesz dodać dodatkowe informacje...'
+        })
+    )

@@ -127,13 +127,49 @@ class ServiceAdmin(admin.ModelAdmin):
 
 @admin.register(Reservation)
 class ReservationAdmin(admin.ModelAdmin):
-	list_display = ('id', 'get_customer_name', 'service', 'start', 'status', 'customer_email', 'customer_phone')
+	list_display = (
+		'id', 'get_customer_name', 'service', 'start', 'status', 
+		'cancelled_by_staff', 'customer_email', 'customer_phone'
+	)
 	list_display_links = ('id', 'get_customer_name')
-	list_filter = ('status', 'service', 'is_guest', 'created_at')
-	search_fields = ('customer_email', 'customer_first_name', 'customer_last_name', 'customer_phone', 'confirmation_code')
+	list_filter = ('status', 'service', 'is_guest', 'cancelled_by_staff', 'created_at')
+	search_fields = (
+		'customer_email', 'customer_first_name', 'customer_last_name', 
+		'customer_phone', 'confirmation_code'
+	)
 	date_hierarchy = 'start'
-	readonly_fields = ('created_at', 'updated_at')
+	readonly_fields = (
+		'created_at', 'updated_at', 'cancelled_at', 'cancelled_by', 
+		'cancellation_token_expires', 'get_hours_until', 'get_can_cancel'
+	)
+	fieldsets = (
+		('Informacje podstawowe', {
+			'fields': ('service', 'user', 'status')
+		}),
+		('Dane klienta', {
+			'fields': (
+				'customer_first_name', 'customer_last_name', 
+				'customer_email', 'customer_phone', 'is_guest'
+			)
+		}),
+		('Szczegóły rezerwacji', {
+			'fields': ('start', 'end', 'notes', 'confirmation_code')
+		}),
+		('Informacje o odwołaniu', {
+			'fields': (
+				'cancelled_at', 'cancelled_by', 'cancelled_by_staff',
+				'cancellation_reason', 'cancellation_note',
+				'cancellation_token', 'cancellation_token_expires'
+			),
+			'classes': ('collapse',)
+		}),
+		('Metadata', {
+			'fields': ('created_at', 'updated_at', 'get_hours_until', 'get_can_cancel'),
+			'classes': ('collapse',)
+		}),
+	)
 	list_per_page = 25
+	actions = ['cancel_reservations', 'mark_as_completed', 'mark_as_no_show']
 	
 	def get_customer_name(self, obj):
 		if obj.customer_first_name or obj.customer_last_name:
@@ -141,6 +177,55 @@ class ReservationAdmin(admin.ModelAdmin):
 		return obj.customer_email
 	get_customer_name.short_description = 'Klient'
 	get_customer_name.admin_order_field = 'customer_last_name'
+	
+	def get_hours_until(self, obj):
+		hours = obj.hours_until_appointment
+		if hours > 0:
+			return f"{hours:.1f} godz."
+		return "Minęło"
+	get_hours_until.short_description = 'Do wizyty'
+	
+	def get_can_cancel(self, obj):
+		can_cancel, message = obj.can_cancel(by_staff=True)
+		return can_cancel
+	get_can_cancel.boolean = True
+	get_can_cancel.short_description = 'Można odwołać'
+	
+	def cancel_reservations(self, request, queryset):
+		"""Akcja masowego odwoływania wizyt przez obsługę"""
+		cancelled_count = 0
+		for reservation in queryset:
+			can_cancel, _ = reservation.can_cancel(by_staff=True)
+			if can_cancel:
+				try:
+					reservation.cancel(
+						cancelled_by=request.user,
+						by_staff=True,
+						reason='staff_cancelled',
+						note=f'Odwołane przez {request.user.get_full_name() or request.user.username} z panelu admin'
+					)
+					cancelled_count += 1
+				except Exception:
+					pass
+		
+		self.message_user(request, f'Odwołano {cancelled_count} wizyt.')
+	cancel_reservations.short_description = 'Odwołaj wybrane wizyty (obsługa)'
+	
+	def mark_as_completed(self, request, queryset):
+		"""Akcja oznaczania wizyt jako zrealizowane"""
+		updated = queryset.filter(
+			status__in=['pending', 'confirmed']
+		).update(status='completed')
+		self.message_user(request, f'Oznaczono {updated} wizyt jako zrealizowane.')
+	mark_as_completed.short_description = 'Oznacz jako zrealizowane'
+	
+	def mark_as_no_show(self, request, queryset):
+		"""Akcja oznaczania wizyt jako nieobecność"""
+		updated = queryset.filter(
+			status__in=['pending', 'confirmed']
+		).update(status='no_show')
+		self.message_user(request, f'Oznaczono {updated} wizyt jako nieobecność.')
+	mark_as_no_show.short_description = 'Oznacz jako nieobecność (no-show)'
 
 
 @admin.register(TimeSlot)
