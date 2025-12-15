@@ -1,0 +1,40 @@
+Dziękujemy za rezerwację!
+
+{{ customer_name }},
+
+Twoja rezerwacja została potwierdzona.
+
+SZCZEGÓŁY WIZYTY:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Usługa:     {{ reservation.service.name }}
+Data:       {{ reservation.start|date:"d.m.Y (l)" }}
+Godzina:    {{ reservation.start|time:"H:i" }} - {{ reservation.end|time:"H:i" }}
+Czas:       {{ reservation.service.duration_minutes }} min
+Cena:       {{ reservation.service.price }} PLN
+
+Kod potwierdzenia: {{ reservation.confirmation_code }}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DODAJ DO KALENDARZA:
+Do tej wiadomości został dołączony plik .ics, który możesz dodać do swojego kalendarza (Google Calendar, Outlook, Apple Calendar).
+
+WAŻNE INFORMACJE:
+• Przyjdź punktualnie - spóźnienie powyżej 15 minut może skutkować anulowaniem wizyty
+• Możesz odwołać wizytę do 24h przed terminem, kontaktując się pod numerem: +48 123 456 789
+• Płatność następuje w salonie po wykonaniu usługi
+
+ADRES SALONU:
+Salon Stylistyki Paznokci
+ul. Przykładowa 123
+00-001 Warszawa
+
+W razie pytań jesteśmy do Twojej dyspozycji:
+📞 +48 123 456 789
+📧 kontakt@stylistka.pl
+
+Do zobaczenia!
+Zespół Salonu Stylistyki Paznokci
+
+---
+To jest automatyczna wiadomość. Prosimy nie odpowiadać na ten e-mail.
+Jeśli chcesz skontaktować się z nami, zadzwoń lub napisz na adres kontakt@stylistka.pl

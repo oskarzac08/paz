@@ -192,3 +192,100 @@ IdeaImageFormSet = inlineformset_factory(
     extra=1,
     can_delete=True
 )
+
+
+class ServiceSelectForm(forms.Form):
+    service = forms.ModelChoiceField(label='Usługa', queryset=None)
+
+    def __init__(self, *args, **kwargs):
+        qs = kwargs.pop('queryset', None)
+        super().__init__(*args, **kwargs)
+        if qs is None:
+            from .models import Service
+            qs = Service.objects.all()
+        self.fields['service'].queryset = qs
+
+
+class DateTimeSelectForm(forms.Form):
+    date = forms.DateField(
+        label='Data',
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+    )
+    time = forms.TimeField(
+        label='Godzina',
+        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'})
+    )
+
+
+class TermsAcceptanceForm(forms.Form):
+    accept_terms = forms.BooleanField(
+        label='Akceptuję regulamin i politykę prywatności',
+        required=True,
+        error_messages={'required': 'Musisz zaakceptować regulamin aby kontynuować'}
+    )
+
+
+class GuestBookingForm(forms.Form):
+    """Formularz dla gości (bez konta)"""
+    first_name = forms.CharField(
+        label='Imię',
+        max_length=100,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Imię'})
+    )
+    last_name = forms.CharField(
+        label='Nazwisko',
+        max_length=100,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nazwisko'})
+    )
+    email = forms.EmailField(
+        label='E-mail',
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'adres@email.pl'})
+    )
+    phone = forms.CharField(
+        label='Numer telefonu',
+        max_length=15,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+48 123 456 789'})
+    )
+    notes = forms.CharField(
+        label='Uwagi (opcjonalnie)',
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Dodatkowe informacje...'})
+    )
+
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if phone:
+            phone = phone.strip()
+            if not re.match(r'^\+?[0-9]{9,15}$', phone.replace(' ', '')):
+                raise forms.ValidationError('Wprowadź prawidłowy numer telefonu (9-15 cyfr)')
+        return phone
+
+
+class RegisterAndBookForm(PolishUserCreationForm):
+    """Formularz rejestracji podczas rezerwacji"""
+    first_name = forms.CharField(
+        label='Imię',
+        max_length=100,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    last_name = forms.CharField(
+        label='Nazwisko',
+        max_length=100,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    phone_number = forms.CharField(
+        label='Numer telefonu',
+        max_length=15,
+        required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+
+
+class ReservationConfirmForm(forms.Form):
+    accept_terms = forms.BooleanField(label='Akceptuję regulamin')
+
+    def clean_accept_terms(self):
+        v = self.cleaned_data.get('accept_terms')
+        if not v:
+            raise forms.ValidationError('Musisz zaakceptować regulamin')
+        return v

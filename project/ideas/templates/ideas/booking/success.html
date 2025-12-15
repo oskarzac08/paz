@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}Rezerwacja potwierdzona!{% endblock %}
+
+{% block content %}
+<style>
+  .success-container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 20px;
+    text-align: center;
+  }
+  .success-icon {
+    font-size: 80px;
+    color: #2b7a78;
+    margin-bottom: 20px;
+  }
+  .success-box {
+    background: #e8f5f4;
+    border: 2px solid #2b7a78;
+    border-radius: 8px;
+    padding: 30px;
+    margin: 30px 0;
+  }
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+  }
+  .detail-row:last-child {
+    border-bottom: none;
+  }
+  .btn-primary {
+    background: #2b7a78;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    margin: 10px;
+  }
+  .btn-secondary {
+    background: #fff;
+    color: #2b7a78;
+    border: 2px solid #2b7a78;
+    padding: 12px 30px;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    margin: 10px;
+  }
+</style>
+
+<div class="success-container">
+  <div class="success-icon">✅</div>
+  <h1>Rezerwacja potwierdzona!</h1>
+  <p>Dziękujemy za rezerwację. Potwierdzenie zostało wysłane na Twój adres e-mail.</p>
+
+  <div class="success-box">
+    <h3 style="margin-top: 0;">📅 Szczegóły rezerwacji</h3>
+    
+    <div class="detail-row">
+      <span>Usługa:</span>
+      <strong>{{ reservation.service.name }}</strong>
+    </div>
+    
+    <div class="detail-row">
+      <span>Data:</span>
+      <strong>{{ reservation.start|date:"d.m.Y (l)" }}</strong>
+    </div>
+    
+    <div class="detail-row">
+      <span>Godzina:</span>
+      <strong>{{ reservation.start|time:"H:i" }} - {{ reservation.end|time:"H:i" }}</strong>
+    </div>
+    
+    <div class="detail-row">
+      <span>Kod potwierdzenia:</span>
+      <strong style="color: #2b7a78; font-size: 18px;">{{ reservation.confirmation_code }}</strong>
+    </div>
+  </div>
+
+  <div style="background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: left;">
+    <h3 style="margin-top: 0;">📧 Co dalej?</h3>
+    <ul style="padding-left: 20px;">
+      <li>Otrzymasz potwierdzenie na e-mail: <strong>{{ reservation.customer_email }}</strong></li>
+      <li>W wiadomości znajdziesz plik .ics do dodania wizyty do kalendarza</li>
+      <li>Przypomnienie otrzymasz 24h przed wizytą</li>
+      <li>W razie pytań zadzwoń: +48 123 456 789</li>
+    </ul>
+  </div>
+
+  <div style="background: #fff4e6; border-left: 4px solid #ff9800; padding: 15px; margin: 20px 0; text-align: left;">
+    <strong>⚠️ Ważne informacje:</strong><br>
+    • Przyjdź punktualnie - spóźnienie >15 min może skutkować anulowaniem wizyty<br>
+    • Możesz odwołać wizytę do 24h przed terminem (użyj kodu: <strong>{{ reservation.confirmation_code }}</strong>)<br>
+    • Płatność w salonie po wykonaniu usługi
+  </div>
+
+  <div style="margin-top: 30px;">
+    <a href="{% url 'ideas:home' %}" class="btn-primary">Strona główna</a>
+    <a href="{% url 'ideas:booking_step1_service' %}" class="btn-secondary">Zarezerwuj kolejną wizytę</a>
+  </div>
+</div>
+{% endblock %}

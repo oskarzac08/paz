@@ -20,6 +20,11 @@ from django.contrib.auth.views import LogoutView
 from django.conf import settings
 from django.conf.urls.static import static
 
+# Polskie nazwy panelu administracyjnego
+admin.site.site_header = 'Panel Administracyjny'
+admin.site.site_title = 'Administracja'
+admin.site.index_title = 'Zarządzanie systemem rezerwacji'
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('ideas.urls', namespace='ideas')),

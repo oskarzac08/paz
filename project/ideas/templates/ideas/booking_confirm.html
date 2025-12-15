@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Rezerwacja potwierdzona!</h1>
+{% if reservation %}
+  <p>Usługa: {{ reservation.service.name }}</p>
+  <p>Data: {{ reservation.start|date:'d.m.Y' }}</p>
+  <p>Godzina: {{ reservation.start|time:'H:i' }} - {{ reservation.end|time:'H:i' }}</p>
+  <p>Cena: {{ reservation.service.price }} PLN</p>
+  <p>Wysłaliśmy potwierdzenie na: {{ reservation.customer_email }}</p>
+  <a href="#">Dodaj do kalendarza</a>
+  <a href="{% url 'ideas:idea_list' %}">Przejdź do moich wizyt</a>
+{% else %}
+  <p>Brak szczegółów rezerwacji.</p>
+{% endif %}
+{% endblock %}

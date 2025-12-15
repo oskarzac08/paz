@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block title %}Regulamin - Rezerwacja{% endblock %}
+
+{% block content %}
+<style>
+  .booking-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .progress-bar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    padding: 0;
+    list-style: none;
+  }
+  .progress-bar li {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    color: #999;
+  }
+  .progress-bar li.active, .progress-bar li.completed {
+    color: #2b7a78;
+    font-weight: bold;
+  }
+  .terms-box {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    background: #f9f9f9;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+  }
+  .checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    margin: 20px 0;
+  }
+  .checkbox-label input {
+    margin-right: 10px;
+    margin-top: 4px;
+  }
+  .btn-primary {
+    background: #2b7a78;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+  }
+  .btn-secondary {
+    background: #999;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 10px;
+  }
+</style>
+
+<div class="booking-container">
+  <ul class="progress-bar">
+    <li class="completed">Usługa</li>
+    <li class="active">Regulamin</li>
+    <li>Termin</li>
+    <li>Dane</li>
+    <li>Gotowe</li>
+  </ul>
+
+  <h1>Regulamin i polityka prywatności</h1>
+  <p><strong>Wybrana usługa:</strong> {{ service.name }} ({{ service.price }} PLN)</p>
+
+  <div class="terms-box">
+    <h3>Regulamin rezerwacji</h3>
+    <p><strong>1. Postanowienia ogólne</strong></p>
+    <p>Niniejszy regulamin określa zasady rezerwacji usług w salonie stylistyki paznokci.</p>
+    
+    <p><strong>2. Rezerwacja</strong></p>
+    <p>• Rezerwacja jest wiążąca po otrzymaniu potwierdzenia e-mailem lub SMS.<br>
+    • Klient zobowiązuje się do punktualnego przybycia na wizytę.<br>
+    • Spóźnienie powyżej 15 minut może skutkować anulowaniem wizyty.</p>
+    
+    <p><strong>3. Odwołanie wizyty</strong></p>
+    <p>• Wizytę można odwołać bezpłatnie do 24h przed terminem.<br>
+    • Odwołanie wizyty w krótszym terminie może wiązać się z opłatą 50% wartości usługi.</p>
+    
+    <p><strong>4. Polityka prywatności</strong></p>
+    <p>• Dane osobowe są przetwarzane zgodnie z RODO.<br>
+    • Dane wykorzystywane są wyłącznie do obsługi rezerwacji i kontaktu.<br>
+    • Klient ma prawo do wglądu, poprawy i usunięcia swoich danych.</p>
+    
+    <p><strong>5. Płatności</strong></p>
+    <p>• Płatność następuje w salonie po wykonaniu usługi.<br>
+    • Akceptujemy gotówkę i karty płatnicze.</p>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <label class="checkbox-label">
+      <input type="checkbox" name="accept_terms" required>
+      <span>Akceptuję <a href="#" target="_blank">regulamin</a> i <a href="#" target="_blank">politykę prywatności</a>. Wyrażam zgodę na przetwarzanie moich danych osobowych w celu obsługi rezerwacji.</span>
+    </label>
+
+    {% if form.errors %}
+    <div style="color: red; margin-bottom: 10px;">
+      {{ form.errors.accept_terms.0 }}
+    </div>
+    {% endif %}
+
+    <button type="submit" class="btn-primary">Dalej →</button>
+    <a href="{% url 'ideas:booking_step1_service' %}" class="btn-secondary">← Wstecz</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}Potwierdzenie rezerwacji{% endblock %}
+
+{% block content %}
+<style>
+  .booking-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .progress-bar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    padding: 0;
+    list-style: none;
+  }
+  .progress-bar li {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    color: #999;
+  }
+  .progress-bar li.active, .progress-bar li.completed {
+    color: #2b7a78;
+    font-weight: bold;
+  }
+  .summary-box {
+    background: #f9f9f9;
+    border: 2px solid #2b7a78;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+  }
+  .summary-row:last-child {
+    border-bottom: none;
+    font-weight: bold;
+    font-size: 18px;
+  }
+  .btn-primary {
+    background: #2b7a78;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 6px;
+    font-size: 18px;
+    cursor: pointer;
+    width: 100%;
+  }
+  .btn-secondary {
+    background: #999;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 10px;
+  }
+</style>
+
+<div class="booking-container">
+  <ul class="progress-bar">
+    <li class="completed">Usługa</li>
+    <li class="completed">Regulamin</li>
+    <li class="completed">Termin</li>
+    <li class="completed">Dane</li>
+    <li class="active">Gotowe</li>
+  </ul>
+
+  <h1>Potwierdzenie rezerwacji</h1>
+  <p>Sprawdź poprawność danych przed potwierdzeniem.</p>
+
+  <div class="summary-box">
+    <h3 style="margin-top: 0;">📋 Podsumowanie</h3>
+    
+    <div class="summary-row">
+      <span>Usługa:</span>
+      <strong>{{ service.name }}</strong>
+    </div>
+    
+    <div class="summary-row">
+      <span>Data:</span>
+      <strong>{{ start|date:"d.m.Y (l)" }}</strong>
+    </div>
+    
+    <div class="summary-row">
+      <span>Godzina:</span>
+      <strong>{{ start|time:"H:i" }} - {{ end|time:"H:i" }}</strong>
+    </div>
+    
+    <div class="summary-row">
+      <span>Czas trwania:</span>
+      <strong>{{ service.duration_minutes }} min</strong>
+    </div>
+    
+    <div class="summary-row">
+      <span>Imię i nazwisko:</span>
+      <strong>{{ customer_name }}</strong>
+    </div>
+    
+    <div class="summary-row">
+      <span>E-mail:</span>
+      <strong>{{ customer_email }}</strong>
+    </div>
+    
+    <div class="summary-row" style="background: #e8f5f4; margin: 10px -20px -20px; padding: 15px 20px;">
+      <span>Cena:</span>
+      <strong style="font-size: 20px; color: #2b7a78;">{{ service.price }} PLN</strong>
+    </div>
+  </div>
+
+  {% if is_guest %}
+  <div style="background: #fff4e6; border-left: 4px solid #ff9800; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+    <strong>ℹ️ Rezerwacja jako gość</strong><br>
+    Potwierdzenie zostanie wysłane na podany adres e-mail. Możesz utworzyć konto później, aby łatwiej zarządzać rezerwacjami.
+  </div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn-primary">✓ Potwierdź rezerwację</button>
+  </form>
+
+  <a href="{% url 'ideas:booking_step3_calendar' %}" class="btn-secondary">← Zmień termin</a>
+</div>
+{% endblock %}

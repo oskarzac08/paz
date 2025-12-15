@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% block title %}Wybierz usługę - Rezerwacja{% endblock %}
+
+{% block content %}
+<style>
+  .booking-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .progress-bar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    padding: 0;
+    list-style: none;
+  }
+  .progress-bar li {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    font-size: 12px;
+    color: #999;
+  }
+  .progress-bar li.active {
+    color: #2b7a78;
+    font-weight: bold;
+  }
+  .progress-bar li::before {
+    content: '';
+    display: block;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #ddd;
+    margin: 0 auto 8px;
+    line-height: 30px;
+  }
+  .progress-bar li.active::before {
+    background: #2b7a78;
+  }
+  .service-card {
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .service-card:hover {
+    border-color: #2b7a78;
+    box-shadow: 0 2px 8px rgba(43,122,120,0.2);
+  }
+  .service-card.selected {
+    border-color: #2b7a78;
+    background: #f0f8f8;
+  }
+  .service-name {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+  .service-details {
+    color: #666;
+    font-size: 14px;
+  }
+  .btn-primary {
+    background: #2b7a78;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 20px;
+  }
+  .btn-primary:hover {
+    background: #236360;
+  }
+  @media (max-width: 600px) {
+    .booking-container {
+      padding: 10px;
+    }
+  }
+</style>
+
+<div class="booking-container">
+  <ul class="progress-bar">
+    <li class="active">Usługa</li>
+    <li>Regulamin</li>
+    <li>Termin</li>
+    <li>Dane</li>
+    <li>Gotowe</li>
+  </ul>
+
+  <h1>Wybierz usługę</h1>
+  <p>Kliknij na usługę, którą chcesz zarezerwować</p>
+
+  <form method="post" id="serviceForm">
+    {% csrf_token %}
+    <input type="hidden" name="service" id="selectedService">
+    
+    {% for service in services %}
+    <div class="service-card" data-service-id="{{ service.id }}">
+      <div class="service-name">{{ service.name }}</div>
+      <div class="service-details">
+        ⏱️ {{ service.duration_minutes }} min | 💰 {{ service.price }} PLN
+      </div>
+      {% if service.description %}
+      <div class="service-details" style="margin-top: 8px;">
+        {{ service.description|truncatewords:20 }}
+      </div>
+      {% endif %}
+    </div>
+    {% empty %}
+    <p>Brak dostępnych usług. Skontaktuj się z nami.</p>
+    {% endfor %}
+
+    <button type="submit" class="btn-primary" id="submitBtn" disabled>
+      Dalej →
+    </button>
+  </form>
+</div>
+
+<script>
+// Add click listeners to service cards
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.service-card').forEach(card => {
+    card.addEventListener('click', function() {
+      selectService(this);
+    });
+  });
+});
+
+function selectService(el) {
+  // Remove previous selection
+  document.querySelectorAll('.service-card').forEach(card => {
+    card.classList.remove('selected');
+  });
+  // Add selection
+  el.classList.add('selected');
+  const serviceId = el.getAttribute('data-service-id');
+  document.getElementById('selectedService').value = serviceId;
+  document.getElementById('submitBtn').disabled = false;
+}
+</script>
+{% endblock %}

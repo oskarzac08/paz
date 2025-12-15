@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% block title %}Twoje dane - Rezerwacja{% endblock %}
+
+{% block content %}
+<style>
+  .booking-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .progress-bar {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    padding: 0;
+    list-style: none;
+  }
+  .progress-bar li {
+    flex: 1;
+    text-align: center;
+    font-size: 12px;
+    color: #999;
+  }
+  .progress-bar li.active, .progress-bar li.completed {
+    color: #2b7a78;
+    font-weight: bold;
+  }
+  .tabs {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #ddd;
+  }
+  .tab {
+    flex: 1;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    background: #f5f5f5;
+    border: none;
+    font-size: 16px;
+  }
+  .tab.active {
+    background: white;
+    border-bottom: 3px solid #2b7a78;
+    font-weight: bold;
+  }
+  .tab-content {
+    display: none;
+  }
+  .tab-content.active {
+    display: block;
+  }
+  .form-group {
+    margin-bottom: 15px;
+  }
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+  .form-group input,
+  .form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+  .btn-primary {
+    background: #2b7a78;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+  }
+  .btn-secondary {
+    background: #999;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 10px;
+  }
+  .info-box {
+    background: #e8f5f4;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+  }
+</style>
+
+<div class="booking-container">
+  <ul class="progress-bar">
+    <li class="completed">Usługa</li>
+    <li class="completed">Regulamin</li>
+    <li class="completed">Termin</li>
+    <li class="active">Dane</li>
+    <li>Gotowe</li>
+  </ul>
+
+  <h1>Twoje dane</h1>
+  
+  <div class="info-box">
+    <strong>{{ service.name }}</strong><br>
+    📅 {{ start|date:"d.m.Y" }} o {{ start|time:"H:i" }}
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('guest')">Rezerwuję jako gość</button>
+    <button class="tab" onclick="switchTab('register')">Utwórz konto</button>
+    <button class="tab" onclick="switchTab('login')">Mam konto</button>
+  </div>
+
+  <!-- Guest booking -->
+  <div id="guest-tab" class="tab-content active">
+    <p>Zarezerwuj szybko bez zakładania konta. Otrzymasz potwierdzenie na e-mail.</p>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="booking_type" value="guest">
+      
+      <div class="form-group">
+        <label>Imię *</label>
+        {{ guest_form.first_name }}
+      </div>
+      <div class="form-group">
+        <label>Nazwisko *</label>
+        {{ guest_form.last_name }}
+      </div>
+      <div class="form-group">
+        <label>E-mail *</label>
+        {{ guest_form.email }}
+      </div>
+      <div class="form-group">
+        <label>Numer telefonu *</label>
+        {{ guest_form.phone }}
+      </div>
+      <div class="form-group">
+        <label>Uwagi (opcjonalnie)</label>
+        {{ guest_form.notes }}
+      </div>
+
+      {% if guest_form.errors %}
+      <div style="color: red; margin-bottom: 15px;">
+        {% for field, errors in guest_form.errors.items %}
+          {% for error in errors %}
+            <div>{{ error }}</div>
+          {% endfor %}
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <button type="submit" class="btn-primary">Dalej →</button>
+    </form>
+  </div>
+
+  <!-- Register -->
+  <div id="register-tab" class="tab-content">
+    <p>Załóż konto, aby łatwiej zarządzać rezerwacjami.</p>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="booking_type" value="register">
+      
+      <div class="form-group">
+        <label>Imię *</label>
+        {{ register_form.first_name }}
+      </div>
+      <div class="form-group">
+        <label>Nazwisko *</label>
+        {{ register_form.last_name }}
+      </div>
+      <div class="form-group">
+        <label>E-mail *</label>
+        {{ register_form.email }}
+      </div>
+      <div class="form-group">
+        <label>Numer telefonu *</label>
+        {{ register_form.phone_number }}
+      </div>
+      <div class="form-group">
+        <label>Nazwa użytkownika *</label>
+        {{ register_form.username }}
+      </div>
+      <div class="form-group">
+        <label>Hasło *</label>
+        {{ register_form.password1 }}
+      </div>
+      <div class="form-group">
+        <label>Powtórz hasło *</label>
+        {{ register_form.password2 }}
+      </div>
+
+      {% if register_form.errors %}
+      <div style="color: red; margin-bottom: 15px;">
+        {% for field, errors in register_form.errors.items %}
+          {% for error in errors %}
+            <div>{{ error }}</div>
+          {% endfor %}
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <button type="submit" class="btn-primary">Zarejestruj i rezerwuj →</button>
+    </form>
+  </div>
+
+  <!-- Login -->
+  <div id="login-tab" class="tab-content">
+    <p>Zaloguj się, aby szybko zarezerwować wizytę.</p>
+    <form method="post" action="{% url 'ideas:login' %}?next={{ request.path }}">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Login lub e-mail</label>
+        <input type="text" name="username" required>
+      </div>
+      <div class="form-group">
+        <label>Hasło</label>
+        <input type="password" name="password" required>
+      </div>
+      <button type="submit" class="btn-primary">Zaloguj się</button>
+    </form>
+  </div>
+
+  <a href="{% url 'ideas:booking_step3_calendar' %}" class="btn-secondary">← Wstecz</a>
+</div>
+
+<script>
+function switchTab(tabName) {
+  // Hide all tabs
+  document.querySelectorAll('.tab-content').forEach(content => {
+    content.classList.remove('active');
+  });
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  // Show selected tab
+  document.getElementById(tabName + '-tab').classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+</script>
+{% endblock %}

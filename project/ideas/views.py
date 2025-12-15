@@ -25,6 +25,13 @@ from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from .utils import generate_code, store_code, verify_code
 from .mailing import send_verification_code
+from .models import Service, Reservation
+from .forms import ServiceSelectForm, DateTimeSelectForm, ReservationConfirmForm
+from django.views.decorators.http import require_GET
+from django.core.mail import EmailMessage
+from django.template.loader import render_to_string
+import datetime
+import pytz
 
 
 class IdeaListView(LoginRequiredMixin, ListView):
@@ -38,6 +45,14 @@ class IdeaListView(LoginRequiredMixin, ListView):
 def landing(request):
     # simple landing page with two buttons: login and register
     return render(request, 'landing.html')
+
+
+def home(request):
+    """Root view: redirect authenticated users to ideas, guests to booking."""
+    if request.user.is_authenticated:
+        return redirect('ideas:idea_list')
+    # For guests, show booking directly
+    return redirect('ideas:booking_step1_service')
 
 
 @ensure_csrf_cookie
@@ -251,3 +266,138 @@ def confirm_email_code(request):
     if verify_code(email, code):
         return JsonResponse({'ok': True})
     return JsonResponse({'ok': False, 'error': 'Nieprawidłowy lub wygasły kod'}, status=400)
+
+
+def _slot_available(service, start_dt, end_dt):
+    # Simple availability check: no overlapping confirmed reservations
+    conflicts = Reservation.objects.filter(service=service, status__in=['pending', 'confirmed']).filter(
+        start__lt=end_dt, end__gt=start_dt
+    )
+    return not conflicts.exists()
+
+
+def booking_step_service(request):
+    """Krok 1: wybór usługi"""
+    if request.method == 'POST':
+        form = ServiceSelectForm(request.POST)
+        if form.is_valid():
+            service = form.cleaned_data['service']
+            request.session['booking_service_id'] = service.id
+            return redirect('ideas:booking_datetime')
+    else:
+        form = ServiceSelectForm()
+    return render(request, 'ideas/booking_service.html', {'form': form})
+
+
+def booking_step_datetime(request):
+    """Krok 2: wybór daty i godziny"""
+    service_id = request.session.get('booking_service_id')
+    if not service_id:
+        messages.error(request, 'Wybierz najpierw usługę')
+        return redirect('ideas:booking_service')
+
+    service = Service.objects.get(id=service_id)
+
+    if request.method == 'POST':
+        form = DateTimeSelectForm(request.POST)
+        if form.is_valid():
+            date = form.cleaned_data['date']
+            time = form.cleaned_data['time']
+            # combine into timezone-aware datetime
+            tz = pytz.timezone(getattr(settings, 'TIME_ZONE', 'UTC'))
+            start_dt = datetime.datetime.combine(date, time)
+            start_dt = tz.localize(start_dt)
+            end_dt = start_dt + datetime.timedelta(minutes=service.duration_minutes)
+
+            if not _slot_available(service, start_dt, end_dt):
+                messages.error(request, 'Termin już niedostępny. Wybierz inny termin.')
+                return redirect('ideas:booking_datetime')
+
+            request.session['booking_start'] = start_dt.isoformat()
+            request.session['booking_end'] = end_dt.isoformat()
+            return redirect('ideas:booking_summary')
+    else:
+        form = DateTimeSelectForm()
+
+    return render(request, 'ideas/booking_datetime.html', {'form': form, 'service': service})
+
+
+def booking_step_summary(request):
+    """Krok 3: podsumowanie i akceptacja regulaminu"""
+    service_id = request.session.get('booking_service_id')
+    start_iso = request.session.get('booking_start')
+    end_iso = request.session.get('booking_end')
+    if not (service_id and start_iso and end_iso):
+        messages.error(request, 'Brak danych rezerwacji. Rozpocznij proces od nowa.')
+        return redirect('ideas:booking_service')
+
+    service = Service.objects.get(id=service_id)
+    tz = pytz.timezone(getattr(settings, 'TIME_ZONE', 'UTC'))
+    start_dt = datetime.datetime.fromisoformat(start_iso)
+    if start_dt.tzinfo is None:
+        start_dt = tz.localize(start_dt)
+    end_dt = datetime.datetime.fromisoformat(end_iso)
+    if end_dt.tzinfo is None:
+        end_dt = tz.localize(end_dt)
+
+    if request.method == 'POST':
+        form = ReservationConfirmForm(request.POST)
+        if form.is_valid():
+            # final availability check
+            if not _slot_available(service, start_dt, end_dt):
+                messages.error(request, 'Termin już niedostępny. Wybierz inny termin.')
+                return redirect('ideas:booking_datetime')
+
+            # create reservation
+            reservation = Reservation.objects.create(
+                service=service,
+                user=request.user if request.user.is_authenticated else None,
+                customer_name=(request.user.get_full_name() if request.user.is_authenticated else ''),
+                customer_email=(request.user.email if request.user.is_authenticated else ''),
+                start=start_dt,
+                end=end_dt,
+                status='confirmed'
+            )
+
+            # send confirmation email with .ics
+            try:
+                subject = f"Potwierdzenie rezerwacji: {service.name}"
+                context = {'reservation': reservation}
+                body = render_to_string('ideas/booking_email.txt', context)
+                email = EmailMessage(subject, body, to=[reservation.customer_email] if reservation.customer_email else None)
+                # create basic .ics
+                ics = (
+                    'BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\n'
+                    f'SUMMARY:{service.name}\n'
+                    f'DTSTART:{reservation.start.strftime("%Y%m%dT%H%M%S")}\n'
+                    f'DTEND:{reservation.end.strftime("%Y%m%dT%H%M%S")}\n'
+                    'END:VEVENT\nEND:VCALENDAR'
+                )
+                email.attach(f"reservation-{reservation.id}.ics", ics, 'text/calendar')
+                if reservation.customer_email:
+                    email.send(fail_silently=True)
+            except Exception:
+                logger.exception('Failed to send booking email')
+
+            request.session['booking_reservation_id'] = reservation.id
+            return redirect('ideas:booking_confirm')
+    else:
+        form = ReservationConfirmForm()
+
+    return render(request, 'ideas/booking_summary.html', {
+        'form': form,
+        'service': service,
+        'start': start_dt,
+        'end': end_dt,
+    })
+
+
+def booking_step_confirm(request):
+    """Krok 4: potwierdzenie"""
+    res_id = request.session.get('booking_reservation_id')
+    if not res_id:
+        messages.error(request, 'Brak potwierdzenia rezerwacji.')
+        return redirect('ideas:booking_service')
+
+    reservation = Reservation.objects.filter(id=res_id).first()
+    return render(request, 'ideas/booking_confirm.html', {'reservation': reservation})

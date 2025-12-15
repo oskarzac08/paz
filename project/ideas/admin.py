@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import Idea, IdeaImage, UserProfile, ActivationCode
+from .models import Service, Reservation, TimeSlot
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as DefaultUserAdmin
 from django.utils.translation import gettext_lazy as _
@@ -14,11 +15,14 @@ class IdeaImageInline(admin.TabularInline):
 
 @admin.register(Idea)
 class IdeaAdmin(admin.ModelAdmin):
-	list_display = ('id', 'title', 'created_at', 'updated_at', 'author')
-	search_fields = ('title', 'description')
-	readonly_fields = ('created_at', 'updated_at')
+	list_display = ('id', 'title', 'author', 'created_at', 'updated_at')
+	list_display_links = ('id', 'title')
+	search_fields = ('title', 'description', 'author__username')
+	list_filter = ('created_at', 'author')
+	readonly_fields = ('created_at', 'updated_at', 'author')
 	inlines = [IdeaImageInline]
-	exclude = ('author',)
+	date_hierarchy = 'created_at'
+	list_per_page = 25
     
 	def save_formset(self, request, form, formset, change):
 		instances = formset.save(commit=False)
@@ -109,3 +113,48 @@ except Exception:
 	pass
 
 admin.site.register(User, CustomUserAdmin)
+
+
+@admin.register(Service)
+class ServiceAdmin(admin.ModelAdmin):
+	list_display = ('id', 'name', 'duration_minutes', 'price')
+	list_display_links = ('id', 'name')
+	search_fields = ('name', 'description')
+	list_filter = ('duration_minutes',)
+	fields = ('name', 'description', 'duration_minutes', 'price')
+	list_per_page = 25
+
+
+@admin.register(Reservation)
+class ReservationAdmin(admin.ModelAdmin):
+	list_display = ('id', 'get_customer_name', 'service', 'start', 'status', 'customer_email', 'customer_phone')
+	list_display_links = ('id', 'get_customer_name')
+	list_filter = ('status', 'service', 'is_guest', 'created_at')
+	search_fields = ('customer_email', 'customer_first_name', 'customer_last_name', 'customer_phone', 'confirmation_code')
+	date_hierarchy = 'start'
+	readonly_fields = ('created_at', 'updated_at')
+	list_per_page = 25
+	
+	def get_customer_name(self, obj):
+		if obj.customer_first_name or obj.customer_last_name:
+			return f"{obj.customer_first_name} {obj.customer_last_name}".strip()
+		return obj.customer_email
+	get_customer_name.short_description = 'Klient'
+	get_customer_name.admin_order_field = 'customer_last_name'
+
+
+@admin.register(TimeSlot)
+class TimeSlotAdmin(admin.ModelAdmin):
+	list_display = ('id', 'service', 'start', 'end', 'get_duration', 'created_at')
+	list_display_links = ('id', 'service')
+	list_filter = ('service', 'created_at')
+	date_hierarchy = 'start'
+	search_fields = ('service__name',)
+	readonly_fields = ('created_at',)
+	list_per_page = 50
+	
+	def get_duration(self, obj):
+		duration = obj.end - obj.start
+		minutes = int(duration.total_seconds() / 60)
+		return f"{minutes} min"
+	get_duration.short_description = 'Czas trwania'

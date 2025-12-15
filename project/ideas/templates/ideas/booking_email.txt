@@ -1,0 +1,7 @@
+Twoja rezerwacja została potwierdzona.
+
+Usługa: {{ reservation.service.name }}
+Data: {{ reservation.start|date:'d.m.Y' }}
+Godzina: {{ reservation.start|time:'H:i' }} - {{ reservation.end|time:'H:i' }}
+
+Dziękujemy!

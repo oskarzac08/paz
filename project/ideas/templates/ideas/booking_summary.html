@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Podsumowanie rezerwacji</h1>
+<p>Usługa: {{ service.name }}</p>
+<p>Data: {{ start|date:'d.m.Y' }}</p>
+<p>Godzina: {{ start|time:'H:i' }} - {{ end|time:'H:i' }}</p>
+<p>Czas trwania: {{ service.duration_minutes }} min</p>
+<p>Cena: {{ service.price }} PLN</p>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Potwierdź rezerwację</button>
+</form>
+<a href="{% url 'ideas:booking_datetime' %}">Wróć i zmień termin</a>
+{% endblock %}
