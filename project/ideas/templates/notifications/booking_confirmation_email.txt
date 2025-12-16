@@ -1,0 +1,24 @@
+Witaj {{ user.first_name|default:"" }},
+
+Dziękujemy za rezerwację! Oto szczegóły Twojej wizyty:
+
+────────────────────────────────
+📅 Data: {{ start|date:"d.m.Y (l)" }}
+🕐 Godzina: {{ start|time:"H:i" }}
+⏱️ Czas trwania: {{ service.duration_minutes }} minut
+💇 Usługa: {{ service.name }}
+💰 Cena: {{ service.price }} PLN
+────────────────────────────────
+
+{% if reservation.timeslot %}Adres: {{ site_name }}
+{% endif %}
+{% if reservation.notes %}Uwagi: {{ reservation.notes }}
+{% endif %}
+
+Odwołanie wizyty:
+Możesz odwołać wizytę do 24h przed terminem.
+{% if cancellation_url %}Link do odwołania: {{ cancellation_url }}
+{% endif %}
+
+Do zobaczenia!
+{{ site_name }}

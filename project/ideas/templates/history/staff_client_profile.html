@@ -1,0 +1,535 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Profil Klienta: {{ client.get_full_name }} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .staff-container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+    
+    .client-header {
+        background: white;
+        border-radius: 8px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+    }
+    
+    .client-info h1 {
+        margin: 0 0 0.5rem 0;
+        color: #333;
+    }
+    
+    .client-info p {
+        margin: 0;
+        color: #666;
+    }
+    
+    .segment-badge {
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        font-weight: bold;
+        font-size: 1rem;
+    }
+    
+    .segment-new {
+        background: #e3f2fd;
+        color: #1976d2;
+    }
+    
+    .segment-regular {
+        background: #e8f5e9;
+        color: #388e3c;
+    }
+    
+    .segment-vip {
+        background: #fff3e0;
+        color: #f57c00;
+    }
+    
+    .segment-at-risk {
+        background: #fff9c4;
+        color: #f57f17;
+    }
+    
+    .segment-problematic {
+        background: #ffebee;
+        color: #c62828;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .stats-card h3 {
+        margin: 0 0 1rem 0;
+        color: #333;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .stat-row:last-child {
+        border-bottom: none;
+    }
+    
+    .stat-label {
+        color: #666;
+    }
+    
+    .stat-value {
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .preferences-card {
+        background: #f0f9ff;
+        border: 2px solid #1976d2;
+    }
+    
+    .preferences-card h3 {
+        color: #1976d2;
+    }
+    
+    .risk-indicators {
+        background: #fff3e0;
+        border-left: 4px solid #f57c00;
+        padding: 1rem;
+        border-radius: 6px;
+        margin-top: 1rem;
+    }
+    
+    .risk-indicators h4 {
+        margin: 0 0 0.5rem 0;
+        color: #e65100;
+    }
+    
+    .risk-indicators ul {
+        margin: 0;
+        padding-left: 1.5rem;
+        color: #666;
+    }
+    
+    .notes-section {
+        background: white;
+        border-radius: 8px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .notes-section h2 {
+        margin: 0 0 1.5rem 0;
+        color: #333;
+    }
+    
+    .add-note-form {
+        background: #f9f9f9;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    
+    .add-note-form textarea {
+        width: 100%;
+        padding: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 1rem;
+        resize: vertical;
+        min-height: 100px;
+    }
+    
+    .add-note-form .checkbox-wrapper {
+        margin: 1rem 0;
+    }
+    
+    .add-note-form label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+    }
+    
+    .add-note-form button {
+        background: #1976d2;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.3s;
+    }
+    
+    .add-note-form button:hover {
+        background: #1565c0;
+    }
+    
+    .note-item {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .note-item.important {
+        border-color: #f57c00;
+        border-width: 2px;
+        background: #fff3e0;
+    }
+    
+    .note-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .note-author {
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .note-date {
+        color: #666;
+        font-size: 0.85rem;
+    }
+    
+    .note-reservation {
+        font-size: 0.85rem;
+        color: #1976d2;
+        margin-bottom: 0.5rem;
+    }
+    
+    .note-text {
+        color: #333;
+        line-height: 1.6;
+        margin: 0;
+    }
+    
+    .important-badge {
+        background: #f57c00;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    
+    .reservations-list {
+        background: white;
+        border-radius: 8px;
+        padding: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .reservations-list h2 {
+        margin: 0 0 1.5rem 0;
+        color: #333;
+    }
+    
+    .reservation-item {
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .reservation-item h4 {
+        margin: 0 0 0.5rem 0;
+        color: #333;
+    }
+    
+    .reservation-item p {
+        margin: 0;
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+    }
+    
+    .status-confirmed {
+        background: #e8f5e9;
+        color: #388e3c;
+    }
+    
+    .status-completed {
+        background: #e3f2fd;
+        color: #1976d2;
+    }
+    
+    .status-cancelled {
+        background: #ffebee;
+        color: #c62828;
+    }
+    
+    .action-buttons {
+        margin-top: 1rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .btn-primary {
+        background: #1976d2;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #1565c0;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: #757575;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background: #616161;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="staff-container">
+    <!-- Client Header -->
+    <div class="client-header">
+        <div class="client-info">
+            <h1>👤 {{ client.get_full_name|default:client.username }}</h1>
+            <p>📧 {{ client.email }}</p>
+            <p style="margin-top: 0.25rem;">
+                🔑 ID: {{ client.id }} | 📅 Klient od: {{ profile_data.first_visit_date|date:"d.m.Y"|default:"Brak wizyt" }}
+            </p>
+        </div>
+        <div>
+            <span class="segment-badge segment-{{ profile_data.customer_segment }}">
+                {{ profile_data.segment_display }}
+            </span>
+            <div style="margin-top: 1rem;">
+                <form method="post" action="{% url 'ideas:update_client_segment' client.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-secondary">
+                        🔄 Aktualizuj segment
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics Grid -->
+    <div class="stats-grid">
+        <!-- Visit Statistics -->
+        <div class="stats-card">
+            <h3>📊 Statystyki Wizyt</h3>
+            <div class="stat-row">
+                <span class="stat-label">Całkowita liczba:</span>
+                <span class="stat-value">{{ profile_data.total_visits }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Ukończone:</span>
+                <span class="stat-value">{{ profile_data.completed_visits }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Odwołane:</span>
+                <span class="stat-value">{{ profile_data.cancelled_visits }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Wskaźnik realizacji:</span>
+                <span class="stat-value">{{ profile_data.completion_rate }}%</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Wskaźnik odwołań:</span>
+                <span class="stat-value">{{ profile_data.cancellation_rate }}%</span>
+            </div>
+        </div>
+        
+        <!-- Financial Statistics -->
+        <div class="stats-card">
+            <h3>💰 Statystyki Finansowe</h3>
+            <div class="stat-row">
+                <span class="stat-label">Łącznie wydano:</span>
+                <span class="stat-value">{{ profile_data.total_spent }} zł</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Średnia cena:</span>
+                <span class="stat-value">{{ profile_data.average_spent }} zł</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Ostatnia wizyta:</span>
+                <span class="stat-value">{{ profile_data.last_visit_date|date:"d.m.Y"|default:"Brak" }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Nadchodząca wizyta:</span>
+                <span class="stat-value">{{ profile_data.next_visit_date|date:"d.m.Y"|default:"Brak" }}</span>
+            </div>
+        </div>
+        
+        <!-- Preferences -->
+        <div class="stats-card preferences-card">
+            <h3>⭐ Preferencje Klienta</h3>
+            <div class="stat-row">
+                <span class="stat-label">Ulubiona usługa:</span>
+                <span class="stat-value">{{ profile_data.favorite_service|default:"Brak danych" }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Preferowany dzień:</span>
+                <span class="stat-value">{{ profile_data.preferred_weekday|default:"Brak preferencji" }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Preferowana pora:</span>
+                <span class="stat-value">{{ profile_data.preferred_time|default:"Brak preferencji" }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Średni odstęp:</span>
+                <span class="stat-value">
+                    {% if profile_data.average_interval %}
+                        {{ profile_data.average_interval }} dni
+                    {% else %}
+                        Brak danych
+                    {% endif %}
+                </span>
+            </div>
+            
+            {% if profile_data.at_risk_indicators %}
+                <div class="risk-indicators">
+                    <h4>⚠️ Wskaźniki ryzyka</h4>
+                    <ul>
+                        {% for indicator in profile_data.at_risk_indicators %}
+                            <li>{{ indicator }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Staff Notes Section -->
+    <div class="notes-section">
+        <h2>📝 Notatki Obsługi</h2>
+        
+        <!-- Add Note Form -->
+        {% if recent_reservations %}
+            <div class="add-note-form">
+                <form method="post" action="{% url 'ideas:add_staff_note' recent_reservations.0.id %}" id="addNoteForm">
+                    {% csrf_token %}
+                    <textarea name="note" placeholder="Dodaj notatkę do ostatniej wizyty..." required></textarea>
+                    
+                    <div class="checkbox-wrapper">
+                        <label>
+                            <input type="checkbox" name="is_important" value="true">
+                            <span>⚠️ Oznacz jako ważną</span>
+                        </label>
+                    </div>
+                    
+                    <button type="submit">Dodaj notatkę</button>
+                </form>
+            </div>
+        {% else %}
+            <p style="color: #666; padding: 1rem; background: #f9f9f9; border-radius: 8px;">
+                Brak rezerwacji - nie można dodać notatki.
+            </p>
+        {% endif %}
+        
+        <!-- Notes List -->
+        {% if all_notes %}
+            {% for note in all_notes %}
+                <div class="note-item {% if note.is_important %}important{% endif %}">
+                    <div class="note-header">
+                        <span class="note-author">
+                            {{ note.author.get_full_name|default:note.author.username }}
+                            {% if note.is_important %}
+                                <span class="important-badge">WAŻNE</span>
+                            {% endif %}
+                        </span>
+                        <span class="note-date">{{ note.created_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+                    <div class="note-reservation">
+                        📅 {{ note.reservation.service.name }} - {{ note.reservation.start|date:"d.m.Y" }}
+                    </div>
+                    <p class="note-text">{{ note.note }}</p>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p style="color: #666; text-align: center; padding: 2rem;">
+                Brak notatek dla tego klienta.
+            </p>
+        {% endif %}
+    </div>
+    
+    <!-- Recent Reservations -->
+    <div class="reservations-list">
+        <h2>📋 Ostatnie Rezerwacje</h2>
+        
+        {% if recent_reservations %}
+            {% for reservation in recent_reservations %}
+                <div class="reservation-item">
+                    <h4>
+                        {{ reservation.service.name }}
+                        <span class="status-badge status-{{ reservation.status }}">
+                            {{ reservation.get_status_display }}
+                        </span>
+                    </h4>
+                    <p>
+                        📅 {{ reservation.start|date:"d.m.Y" }} o {{ reservation.start|time:"H:i" }}
+                        | 💰 {{ reservation.service.price }} zł
+                    </p>
+                    {% if reservation.status == 'cancelled' and reservation.cancellation_reason %}
+                        <p style="color: #d32f2f; margin-top: 0.5rem;">
+                            ❌ Powód odwołania: {{ reservation.cancellation_reason }}
+                        </p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <p style="color: #666; text-align: center; padding: 2rem;">
+                Brak rezerwacji.
+            </p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

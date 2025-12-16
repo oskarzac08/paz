@@ -1,0 +1,2 @@
+Wizyta odwołana: {{ service.name }}, {{ reservation.start|date:"d.m.Y" }} {{ reservation.start|time:"H:i" }}
+{{ site_name }}

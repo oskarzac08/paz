@@ -1,0 +1,10 @@
+Witaj {{ user.first_name|default:"" }},
+
+Za 2 godziny masz umówioną wizytę!
+
+📅 {{ start|date:"d.m.Y" }}
+🕐 {{ start|time:"H:i" }}
+💇 {{ service.name }}
+
+Do zobaczenia!
+{{ site_name }}

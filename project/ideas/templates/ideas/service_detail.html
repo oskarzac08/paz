@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ service.name }} - Szczegóły usługi{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/service_detail.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="service-detail-container">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+        <a href="{% url 'ideas:service_catalog' %}">Usługi</a>
+        <span>/</span>
+        {% if service.category %}
+        <a href="{% url 'ideas:service_catalog' %}?category={{ service.category.slug }}">{{ service.category.name }}</a>
+        <span>/</span>
+        {% endif %}
+        <span class="current">{{ service.name }}</span>
+    </nav>
+
+    <!-- Hero section -->
+    <section class="service-hero">
+        <div class="hero-image">
+            {% if primary_image %}
+                <img src="{{ primary_image.image.url }}" 
+                     alt="{{ primary_image.alt_text|default:service.name }}">
+            {% else %}
+                <div class="hero-placeholder" style="background: linear-gradient(135deg, {{ service.color }}40, {{ service.color }}80);">
+                    {% if service.icon %}
+                    <i class="fas {{ service.icon }}" style="color: {{ service.color }}; font-size: 5rem;"></i>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="hero-info">
+            <h1 class="service-title">
+                {% if service.icon %}
+                <i class="fas {{ service.icon }}" style="color: {{ service.color }};"></i>
+                {% endif %}
+                {{ service.name }}
+            </h1>
+            {% if service.category %}
+            <span class="service-category-badge" style="background-color: {{ service.color }}20; color: {{ service.color }};">
+                {{ service.category.name }}
+            </span>
+            {% endif %}
+            
+            <div class="service-stats">
+                <div class="stat-item">
+                    <i class="fas fa-coins"></i>
+                    <div class="stat-content">
+                        <span class="stat-label">Cena</span>
+                        <span class="stat-value">{{ service.price }} PLN</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <i class="far fa-clock"></i>
+                    <div class="stat-content">
+                        <span class="stat-label">Czas trwania</span>
+                        <span class="stat-value">{{ service.duration_minutes }} minut</span>
+                    </div>
+                </div>
+                {% if service.booking_count > 0 %}
+                <div class="stat-item">
+                    <i class="fas fa-users"></i>
+                    <div class="stat-content">
+                        <span class="stat-label">Rezerwacji</span>
+                        <span class="stat-value">{{ service.booking_count }}</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="hero-actions">
+                <a href="{% url 'ideas:booking_step1_service' %}?service_id={{ service.id }}" class="btn-book-now">
+                    <i class="fas fa-calendar-check"></i> Zarezerwuj teraz
+                </a>
+                <button class="btn-share" onclick="shareService()">
+                    <i class="fas fa-share-alt"></i> Udostępnij
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Opis usługi -->
+    <section class="service-description">
+        <h2>Opis usługi</h2>
+        {% if service.description_full %}
+            <div class="description-content">
+                {{ service.description_full|linebreaks }}
+            </div>
+        {% elif service.description %}
+            <div class="description-content">
+                {{ service.description|linebreaks }}
+            </div>
+        {% else %}
+            <p>{{ service.description_short }}</p>
+        {% endif %}
+    </section>
+
+    <!-- Galeria zdjęć -->
+    {% if gallery_images %}
+    <section class="service-gallery">
+        <h2>Galeria</h2>
+        <div class="gallery-grid">
+            {% for image in gallery_images %}
+            <div class="gallery-item" onclick="openGalleryModal({{ forloop.counter0 }})">
+                <img src="{{ image.image.url }}" 
+                     alt="{{ image.alt_text|default:'Zdjęcie usługi' }}" 
+                     loading="lazy">
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Podobne usługi -->
+    {% if related_services %}
+    <section class="related-services">
+        <h2>Podobne usługi</h2>
+        <div class="related-grid">
+            {% for rel_service in related_services %}
+            <div class="related-card">
+                <div class="related-image">
+                    {% if rel_service.primary_image %}
+                        <img src="{{ rel_service.primary_image.image.url }}" 
+                             alt="{{ rel_service.name }}" 
+                             loading="lazy">
+                    {% else %}
+                        <div class="related-placeholder" style="background-color: {{ rel_service.color }}20;">
+                            {% if rel_service.icon %}
+                            <i class="fas {{ rel_service.icon }}" style="color: {{ rel_service.color }}; font-size: 2rem;"></i>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="related-content">
+                    <h3>{{ rel_service.name }}</h3>
+                    <p class="related-meta">
+                        <i class="far fa-clock"></i> {{ rel_service.duration_minutes }} min &bull; {{ rel_service.price }} PLN
+                    </p>
+                    <a href="{% url 'ideas:service_detail' rel_service.id %}" class="btn-related">
+                        Zobacz szczegóły
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+
+<!-- Modal galerii -->
+<div id="galleryModal" class="gallery-modal" onclick="closeGalleryModal()">
+    <span class="modal-close">&times;</span>
+    <div class="modal-content">
+        <button class="modal-prev" onclick="navigateGallery(-1); event.stopPropagation();">&#10094;</button>
+        <img id="modalImage" src="" alt="">
+        <button class="modal-next" onclick="navigateGallery(1); event.stopPropagation();">&#10095;</button>
+    </div>
+    <div class="modal-caption" id="modalCaption"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Galeria - dane zdjęć
+const galleryImages = [
+    {% for image in gallery_images %}
+    {
+        url: "{{ image.image.url }}",
+        alt: "{{ image.alt_text|default:'Zdjęcie usługi'|escapejs }}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+];
+
+let currentImageIndex = 0;
+
+function openGalleryModal(index) {
+    currentImageIndex = index;
+    const modal = document.getElementById('galleryModal');
+    const modalImg = document.getElementById('modalImage');
+    const caption = document.getElementById('modalCaption');
+    
+    modal.style.display = 'block';
+    modalImg.src = galleryImages[index].url;
+    caption.textContent = galleryImages[index].alt;
+    
+    document.body.style.overflow = 'hidden';
+}
+
+function closeGalleryModal() {
+    const modal = document.getElementById('galleryModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function navigateGallery(direction) {
+    currentImageIndex = (currentImageIndex + direction + galleryImages.length) % galleryImages.length;
+    const modalImg = document.getElementById('modalImage');
+    const caption = document.getElementById('modalCaption');
+    
+    modalImg.src = galleryImages[currentImageIndex].url;
+    caption.textContent = galleryImages[currentImageIndex].alt;
+}
+
+// Klawisze strzałek dla nawigacji
+document.addEventListener('keydown', function(e) {
+    const modal = document.getElementById('galleryModal');
+    if (modal.style.display === 'block') {
+        if (e.key === 'ArrowLeft') navigateGallery(-1);
+        if (e.key === 'ArrowRight') navigateGallery(1);
+        if (e.key === 'Escape') closeGalleryModal();
+    }
+});
+
+// Udostępnianie
+function shareService() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ service.name }}',
+            text: '{{ service.description_short|default:service.description|truncatewords:20|escapejs }}',
+            url: window.location.href
+        }).catch(err => console.log('Error sharing:', err));
+    } else {
+        // Fallback - kopiuj link
+        navigator.clipboard.writeText(window.location.href);
+        alert('Link skopiowany do schowka!');
+    }
+}
+</script>
+{% endblock %}

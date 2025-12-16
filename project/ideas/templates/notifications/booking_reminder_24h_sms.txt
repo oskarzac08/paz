@@ -1,0 +1,4 @@
+Przypomnienie: Wizyta jutro {{ start|date:"d.m.Y" }} o {{ start|time:"H:i" }}
+{{ service.name }} ({{ service.duration_minutes }}min, {{ service.price }} PLN)
+{% if cancellation_url %}Odwołaj: {{ cancellation_url }}{% endif %}
+{{ site_name }}

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+        }
+        .booking-details {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        .detail-row {
+            display: flex;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: bold;
+            width: 140px;
+            color: #667eea;
+        }
+        .detail-value {
+            flex: 1;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 10px 5px;
+        }
+        .button-secondary {
+            background: #dc3545;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>✅ Potwierdzenie rezerwacji</h1>
+    </div>
+    
+    <div class="content">
+        <p>Witaj <strong>{{ user.first_name|default:"" }}</strong>,</p>
+        
+        <p>Dziękujemy za rezerwację! Oto szczegóły Twojej wizyty:</p>
+        
+        <div class="booking-details">
+            <div class="detail-row">
+                <div class="detail-label">📅 Data:</div>
+                <div class="detail-value">{{ start|date:"d.m.Y (l)" }}</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">🕐 Godzina:</div>
+                <div class="detail-value">{{ start|time:"H:i" }}</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">⏱️ Czas trwania:</div>
+                <div class="detail-value">{{ service.duration_minutes }} minut</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">💇 Usługa:</div>
+                <div class="detail-value">{{ service.name }}</div>
+            </div>
+            <div class="detail-row">
+                <div class="detail-label">💰 Cena:</div>
+                <div class="detail-value">{{ service.price }} PLN</div>
+            </div>
+        </div>
+        
+        {% if reservation.notes %}
+        <p><strong>Uwagi:</strong> {{ reservation.notes }}</p>
+        {% endif %}
+        
+        <div style="text-align: center; margin: 30px 0;">
+            {% if cancellation_url %}
+            <a href="{{ cancellation_url }}" class="button button-secondary">Odwołaj wizytę</a>
+            {% endif %}
+        </div>
+        
+        <p><strong>Ważne informacje:</strong></p>
+        <ul>
+            <li>Możesz odwołać wizytę do 24 godzin przed terminem</li>
+            <li>W przypadku pytań, skontaktuj się z nami</li>
+        </ul>
+        
+        <p>Do zobaczenia!<br>
+        <strong>{{ site_name }}</strong></p>
+    </div>
+    
+    <div class="footer">
+        <p>{{ site_name }} - System Rezerwacji<br>
+        To jest automatyczna wiadomość, nie odpowiadaj na nią.</p>
+    </div>
+</body>
+</html>

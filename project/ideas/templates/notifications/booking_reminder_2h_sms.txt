@@ -1,0 +1,2 @@
+Za 2h wizyta: {{ service.name }}, {{ start|time:"H:i" }}
+{{ site_name }}

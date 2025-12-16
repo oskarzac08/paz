@@ -1,0 +1,3 @@
+{{ message|default:"To jest powiadomienie z systemu." }}
+
+{{ site_name }}

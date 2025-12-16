@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Ustawienia powiadomień{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">
+        <i class="bi bi-bell"></i> Ustawienia powiadomień
+    </h1>
+    
+    {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
+    {% endif %}
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Preferowany kanał -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Preferowany kanał komunikacji</h5>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="preferred_channel" 
+                                       id="channel_email" value="email" 
+                                       {% if preferences.preferred_channel == 'email' %}checked{% endif %}>
+                                <label class="form-check-label" for="channel_email">
+                                    <strong>E-mail</strong><br>
+                                    <small class="text-muted">Otrzymuj powiadomienia na adres e-mail</small>
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="radio" name="preferred_channel" 
+                                       id="channel_sms" value="sms"
+                                       {% if preferences.preferred_channel == 'sms' %}checked{% endif %}>
+                                <label class="form-check-label" for="channel_sms">
+                                    <strong>SMS</strong><br>
+                                    <small class="text-muted">Otrzymuj powiadomienia SMS-em</small>
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="radio" name="preferred_channel" 
+                                       id="channel_both" value="both"
+                                       {% if preferences.preferred_channel == 'both' %}checked{% endif %}>
+                                <label class="form-check-label" for="channel_both">
+                                    <strong>Oba</strong><br>
+                                    <small class="text-muted">Otrzymuj powiadomienia przez e-mail i SMS (priorytet: e-mail)</small>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Powiadomienia transakcyjne -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Powiadomienia o rezerwacjach</h5>
+                            <p class="text-muted small">
+                                <i class="bi bi-info-circle"></i> 
+                                Potwierdzenia rezerwacji i odwołania są wymagane i nie mogą być wyłączone.
+                            </p>
+                            
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" disabled checked>
+                                <label class="form-check-label">
+                                    <strong>Potwierdzenie rezerwacji</strong> <span class="badge bg-secondary">Wymagane</span><br>
+                                    <small class="text-muted">Otrzymasz e-mail po dokonaniu rezerwacji</small>
+                                </label>
+                            </div>
+                            
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" disabled checked>
+                                <label class="form-check-label">
+                                    <strong>Potwierdzenie odwołania</strong> <span class="badge bg-secondary">Wymagane</span><br>
+                                    <small class="text-muted">Otrzymasz potwierdzenie po odwołaniu wizyty</small>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Przypomnienia -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Przypomnienia o wizytach</h5>
+                            
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="enable_reminder_24h" 
+                                       id="enable_reminder_24h"
+                                       {% if preferences.enable_reminder_24h %}checked{% endif %}>
+                                <label class="form-check-label" for="enable_reminder_24h">
+                                    <strong>Przypomnienie 24h przed wizytą</strong><br>
+                                    <small class="text-muted">Otrzymasz przypomnienie dzień przed wizytą</small>
+                                </label>
+                            </div>
+                            
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" name="enable_reminder_2h" 
+                                       id="enable_reminder_2h"
+                                       {% if preferences.enable_reminder_2h %}checked{% endif %}>
+                                <label class="form-check-label" for="enable_reminder_2h">
+                                    <strong>Przypomnienie 2h przed wizytą</strong><br>
+                                    <small class="text-muted">Otrzymasz krótkie przypomnienie na 2 godziny przed</small>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Zmiany -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Zmiany w wizytach</h5>
+                            
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="enable_booking_changes" 
+                                       id="enable_booking_changes"
+                                       {% if preferences.enable_booking_changes %}checked{% endif %}>
+                                <label class="form-check-label" for="enable_booking_changes">
+                                    <strong>Powiadomienia o zmianach</strong><br>
+                                    <small class="text-muted">Otrzymasz powiadomienie o zmianach w Twoich wizytach</small>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Marketing -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Marketing i newsletter</h5>
+                            
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="enable_marketing" 
+                                       id="enable_marketing"
+                                       {% if preferences.enable_marketing %}checked{% endif %}>
+                                <label class="form-check-label" for="enable_marketing">
+                                    <strong>Oferty promocyjne</strong><br>
+                                    <small class="text-muted">Otrzymuj informacje o promocjach i rabatach</small>
+                                </label>
+                            </div>
+                            
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" name="enable_newsletter" 
+                                       id="enable_newsletter"
+                                       {% if preferences.enable_newsletter %}checked{% endif %}>
+                                <label class="form-check-label" for="enable_newsletter">
+                                    <strong>Newsletter</strong><br>
+                                    <small class="text-muted">Otrzymuj regularny newsletter z poradami i nowościami</small>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- Godziny ciszy -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Godziny ciszy (opcjonalnie)</h5>
+                            <p class="text-muted small">
+                                <i class="bi bi-moon"></i> 
+                                Nieważne powiadomienia (np. marketing) nie będą wysyłane w tych godzinach.
+                                Ważne powiadomienia (rezerwacje) będą wysyłane zawsze.
+                            </p>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="quiet_hours_start" class="form-label">Od godziny</label>
+                                    <input type="time" class="form-control" id="quiet_hours_start" 
+                                           name="quiet_hours_start"
+                                           value="{{ preferences.quiet_hours_start|default:'' }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="quiet_hours_end" class="form-label">Do godziny</label>
+                                    <input type="time" class="form-control" id="quiet_hours_end" 
+                                           name="quiet_hours_end"
+                                           value="{{ preferences.quiet_hours_end|default:'' }}">
+                                </div>
+                            </div>
+                            <small class="text-muted">Zostaw puste, aby wyłączyć godziny ciszy.</small>
+                        </div>
+                        
+                        <!-- Przyciski -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'ideas_list' %}" class="btn btn-secondary">Anuluj</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Zapisz zmiany
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-info-circle"></i> Informacje
+                    </h5>
+                    
+                    <p class="card-text">
+                        <strong>Twoje dane kontaktowe:</strong><br>
+                        📧 {{ user.email }}<br>
+                        {% if user.profile.phone_number %}
+                        📱 {{ user.profile.phone_number }}
+                        {% else %}
+                        📱 <em>Brak numeru telefonu</em><br>
+                        <small class="text-muted">Dodaj numer w ustawieniach profilu, aby otrzymywać SMS-y</small>
+                        {% endif %}
+                    </p>
+                    
+                    <hr>
+                    
+                    <p class="card-text">
+                        <strong>Status weryfikacji:</strong><br>
+                        {% if user.profile.email_verified %}
+                        ✅ E-mail zweryfikowany
+                        {% else %}
+                        ⚠️ E-mail niezweryfikowany
+                        {% endif %}
+                        <br>
+                        {% if user.profile.phone_verified %}
+                        ✅ Telefon zweryfikowany
+                        {% else %}
+                        ⚠️ Telefon niezweryfikowany
+                        {% endif %}
+                    </p>
+                    
+                    <hr>
+                    
+                    <p class="card-text">
+                        <a href="{% url 'notification_history' %}" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bi bi-clock-history"></i> Historia powiadomień
+                        </a>
+                    </p>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mt-3">
+                <div class="card-body">
+                    <h6 class="card-title">💡 Wskazówki</h6>
+                    <ul class="small mb-0">
+                        <li>Przypomnienia 24h dają czas na odwołanie</li>
+                        <li>SMS jest szybszy dla pilnych informacji</li>
+                        <li>E-mail zawiera więcej szczegółów</li>
+                        <li>Możesz wyłączyć marketing, ale nie rezerwacje</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

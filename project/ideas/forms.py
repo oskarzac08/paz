@@ -1,9 +1,12 @@
 from django import forms
 from django.forms import inlineformset_factory
-from .models import Idea, IdeaImage
+from .models import Idea, IdeaImage, TimeSlot, Service, RecurringSlotTemplate
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.contrib.auth import get_user_model
+from django.utils import timezone
+from datetime import datetime, time, timedelta
 import re
+import json
 
 User = get_user_model()
 
@@ -319,3 +322,403 @@ class CancellationForm(forms.Form):
             'placeholder': 'Możesz dodać dodatkowe informacje...'
         })
     )
+
+
+# ===== Time Slot Management Forms =====
+
+class SingleTimeSlotForm(forms.ModelForm):
+    """Formularz tworzenia pojedynczego slotu"""
+    
+    date = forms.DateField(
+        label='Data',
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control',
+            'min': timezone.now().date().isoformat()
+        }),
+        error_messages={
+            'required': 'Wybierz datę.',
+            'invalid': 'Wprowadź prawidłową datę.'
+        }
+    )
+    
+    time = forms.TimeField(
+        label='Godzina rozpoczęcia',
+        widget=forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'form-control',
+            'step': '900'  # 15 minutes
+        }),
+        error_messages={
+            'required': 'Wybierz godzinę.',
+            'invalid': 'Wprowadź prawidłową godzinę.'
+        }
+    )
+    
+    class Meta:
+        model = TimeSlot
+        fields = ['service', 'status']
+        widgets = {
+            'service': forms.Select(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'service': 'Usługa (opcjonalnie dla blokad)',
+            'status': 'Status',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['service'].required = False
+        self.fields['service'].help_text = 'Pozostaw puste dla globalnej blokady (wszystkie usługi)'
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        date = cleaned_data.get('date')
+        time_value = cleaned_data.get('time')
+        service = cleaned_data.get('service')
+        status = cleaned_data.get('status')
+        
+        if not date or not time_value:
+            return cleaned_data
+        
+        # Połącz datę i czas
+        start_dt = timezone.make_aware(datetime.combine(date, time_value))
+        
+        # Sprawdź czy nie jest w przeszłości
+        if start_dt < timezone.now():
+            raise forms.ValidationError('Nie możesz utworzyć slotu w przeszłości.')
+        
+        # Dla dostępnych slotów wymagaj usługi
+        if status == 'available' and not service:
+            raise forms.ValidationError('Dostępny slot musi mieć przypisaną usługę.')
+        
+        # Oblicz end_dt
+        if service:
+            end_dt = start_dt + timedelta(minutes=service.duration_minutes)
+            
+            # Sprawdź nakładanie tylko jeśli jest usługa
+            conflicts = TimeSlot.objects.filter(
+                service=service,
+                start__lt=end_dt,
+                end__gt=start_dt
+            )
+            
+            if self.instance.pk:
+                conflicts = conflicts.exclude(pk=self.instance.pk)
+            
+            if conflicts.exists():
+                raise forms.ValidationError(
+                    f'Istnieją już sloty w tym czasie: {", ".join([str(s.start.time()) for s in conflicts])}'
+                )
+        else:
+            # Dla blokad bez usługi - domyślnie 1 godzina
+            end_dt = start_dt + timedelta(hours=1)
+        
+        # Zapisz połączone wartości
+        cleaned_data['start'] = start_dt
+        cleaned_data['end'] = end_dt
+        
+        return cleaned_data
+
+
+class RecurringTimeSlotForm(forms.Form):
+    """Formularz tworzenia cyklicznych slotów"""
+    
+    service = forms.ModelChoiceField(
+        queryset=Service.objects.filter(is_active=True),
+        label='Usługa',
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        error_messages={'required': 'Wybierz usługę.'}
+    )
+    
+    start_date = forms.DateField(
+        label='Data rozpoczęcia',
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control',
+            'min': timezone.now().date().isoformat()
+        }),
+        error_messages={'required': 'Wybierz datę rozpoczęcia.'}
+    )
+    
+    end_date = forms.DateField(
+        label='Data zakończenia',
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control'
+        }),
+        error_messages={'required': 'Wybierz datę zakończenia.'}
+    )
+    
+    # Dni tygodnia
+    monday = forms.BooleanField(label='Poniedziałek', required=False)
+    tuesday = forms.BooleanField(label='Wtorek', required=False)
+    wednesday = forms.BooleanField(label='Środa', required=False)
+    thursday = forms.BooleanField(label='Czwartek', required=False)
+    friday = forms.BooleanField(label='Piątek', required=False)
+    saturday = forms.BooleanField(label='Sobota', required=False)
+    sunday = forms.BooleanField(label='Niedziela', required=False)
+    
+    start_time = forms.TimeField(
+        label='Godzina rozpoczęcia',
+        widget=forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'form-control'
+        }),
+        initial=time(9, 0),
+        error_messages={'required': 'Wybierz godzinę rozpoczęcia.'}
+    )
+    
+    end_time = forms.TimeField(
+        label='Godzina zakończenia',
+        widget=forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'form-control'
+        }),
+        initial=time(17, 0),
+        error_messages={'required': 'Wybierz godzinę zakończenia.'}
+    )
+    
+    slot_interval_minutes = forms.IntegerField(
+        label='Interwał między slotami (minuty)',
+        min_value=15,
+        max_value=240,
+        initial=60,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'step': '15'
+        }),
+        required=False,
+        help_text='Domyślnie: czas trwania usługi'
+    )
+    
+    breaks = forms.CharField(
+        label='Przerwy (opcjonalnie)',
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Format JSON: [{"start": "12:00", "end": "13:00", "name": "Przerwa obiadowa"}]'
+        }),
+        help_text='Lista przerw w formacie JSON'
+    )
+    
+    save_as_template = forms.BooleanField(
+        label='Zapisz jako szablon',
+        required=False,
+        initial=False
+    )
+    
+    template_name = forms.CharField(
+        label='Nazwa szablonu',
+        max_length=200,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Np. "Standardowy tydzień roboczy"'
+        })
+    )
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+        start_time = cleaned_data.get('start_time')
+        end_time = cleaned_data.get('end_time')
+        
+        # Walidacja dat
+        if start_date and end_date:
+            if end_date < start_date:
+                raise forms.ValidationError('Data zakończenia nie może być wcześniejsza niż data rozpoczęcia.')
+            
+            if start_date < timezone.now().date():
+                raise forms.ValidationError('Data rozpoczęcia nie może być w przeszłości.')
+        
+        # Walidacja czasów
+        if start_time and end_time:
+            if end_time <= start_time:
+                raise forms.ValidationError('Godzina zakończenia musi być późniejsza niż godzina rozpoczęcia.')
+        
+        # Sprawdź czy wybrano przynajmniej jeden dzień
+        days = [
+            cleaned_data.get('monday'),
+            cleaned_data.get('tuesday'),
+            cleaned_data.get('wednesday'),
+            cleaned_data.get('thursday'),
+            cleaned_data.get('friday'),
+            cleaned_data.get('saturday'),
+            cleaned_data.get('sunday'),
+        ]
+        
+        if not any(days):
+            raise forms.ValidationError('Wybierz przynajmniej jeden dzień tygodnia.')
+        
+        # Walidacja breaks JSON
+        breaks_str = cleaned_data.get('breaks')
+        if breaks_str:
+            try:
+                breaks_list = json.loads(breaks_str)
+                if not isinstance(breaks_list, list):
+                    raise forms.ValidationError('Przerwy muszą być listą.')
+                cleaned_data['breaks_parsed'] = breaks_list
+            except json.JSONDecodeError:
+                raise forms.ValidationError('Nieprawidłowy format JSON dla przerw.')
+        else:
+            cleaned_data['breaks_parsed'] = []
+        
+        # Sprawdź wymóg nazwy szablonu
+        if cleaned_data.get('save_as_template') and not cleaned_data.get('template_name'):
+            raise forms.ValidationError('Podaj nazwę szablonu.')
+        
+        return cleaned_data
+
+
+class CopyTimeSlotsForm(forms.Form):
+    """Formularz kopiowania slotów"""
+    
+    source_start_date = forms.DateField(
+        label='Data rozpoczęcia źródłowego okresu',
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control'
+        }),
+        error_messages={'required': 'Wybierz datę rozpoczęcia źródłowego okresu.'}
+    )
+    
+    source_end_date = forms.DateField(
+        label='Data zakończenia źródłowego okresu',
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control'
+        }),
+        error_messages={'required': 'Wybierz datę zakończenia źródłowego okresu.'}
+    )
+    
+    target_start_date = forms.DateField(
+        label='Data rozpoczęcia docelowego okresu',
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control',
+            'min': timezone.now().date().isoformat()
+        }),
+        error_messages={'required': 'Wybierz datę rozpoczęcia docelowego okresu.'}
+    )
+    
+    copy_blocked = forms.BooleanField(
+        label='Kopiuj również zablokowane sloty',
+        required=False,
+        initial=False
+    )
+    
+    skip_existing = forms.BooleanField(
+        label='Pomiń istniejące sloty (nie nadpisuj)',
+        required=False,
+        initial=True
+    )
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        source_start = cleaned_data.get('source_start_date')
+        source_end = cleaned_data.get('source_end_date')
+        target_start = cleaned_data.get('target_start_date')
+        
+        if source_start and source_end:
+            if source_end < source_start:
+                raise forms.ValidationError('Data zakończenia źródłowego okresu nie może być wcześniejsza niż data rozpoczęcia.')
+        
+        if target_start and target_start < timezone.now().date():
+            raise forms.ValidationError('Data rozpoczęcia docelowego okresu nie może być w przeszłości.')
+        
+        return cleaned_data
+
+
+class BlockTimeSlotsForm(forms.Form):
+    """Formularz blokowania slotów"""
+    
+    start_date = forms.DateField(
+        label='Data rozpoczęcia',
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control',
+            'min': timezone.now().date().isoformat()
+        }),
+        error_messages={'required': 'Wybierz datę rozpoczęcia.'}
+    )
+    
+    end_date = forms.DateField(
+        label='Data zakończenia',
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control'
+        }),
+        error_messages={'required': 'Wybierz datę zakończenia.'}
+    )
+    
+    start_time = forms.TimeField(
+        label='Godzina rozpoczęcia (opcjonalnie)',
+        required=False,
+        widget=forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'form-control'
+        }),
+        help_text='Pozostaw puste aby zablokować cały dzień'
+    )
+    
+    end_time = forms.TimeField(
+        label='Godzina zakończenia (opcjonalnie)',
+        required=False,
+        widget=forms.TimeInput(attrs={
+            'type': 'time',
+            'class': 'form-control'
+        }),
+        help_text='Pozostaw puste aby zablokować cały dzień'
+    )
+    
+    services = forms.ModelMultipleChoiceField(
+        queryset=Service.objects.filter(is_active=True),
+        label='Usługi (opcjonalnie)',
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text='Pozostaw puste aby utworzyć globalną blokadę dla wszystkich usług (np. urlop, zamknięcie salonu)'
+    )
+    
+    block_reason = forms.ChoiceField(
+        label='Powód blokady',
+        choices=TimeSlot.BLOCK_REASON_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        error_messages={'required': 'Wybierz powód blokady.'}
+    )
+    
+    block_note = forms.CharField(
+        label='Notatka',
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Dodatkowe informacje o blokadzie...'
+        })
+    )
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+        start_time = cleaned_data.get('start_time')
+        end_time = cleaned_data.get('end_time')
+        
+        if start_date and end_date:
+            if end_date < start_date:
+                raise forms.ValidationError('Data zakończenia nie może być wcześniejsza niż data rozpoczęcia.')
+            
+            if start_date < timezone.now().date():
+                raise forms.ValidationError('Data rozpoczęcia nie może być w przeszłości.')
+        
+        if start_time and end_time:
+            if end_time <= start_time:
+                raise forms.ValidationError('Godzina zakończenia musi być późniejsza niż godzina rozpoczęcia.')
+        
+        if (start_time and not end_time) or (end_time and not start_time):
+            raise forms.ValidationError('Podaj obie godziny lub zostaw obie puste.')
+        
+        return cleaned_data

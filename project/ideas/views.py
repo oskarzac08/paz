@@ -95,7 +95,7 @@ def register_view(request):
                 request,
                 f'Konto utworzone. Kod weryfikacyjny wysłano na: {", ".join(codes_sent)}.'
             )
-            return redirect('ideas:verify_code')
+            return redirect('ideas:landing')
     else:
         form = PolishUserCreationForm()
 
@@ -119,6 +119,7 @@ def dev_csrf_view(request):
     return JsonResponse({'csrftoken': token})
 
 
+@ensure_csrf_cookie
 def verify_code_view(request):
     """Widok weryfikacji kodu"""
     user_id = request.session.get('pending_verification_user_id')
@@ -165,7 +166,7 @@ def verify_code_view(request):
                         del request.session['verification_channels']
                     
                     messages.success(request, 'Weryfikacja zakończona pomyślnie! Witamy!')
-                    return redirect('ideas:idea_list')
+                    return redirect('ideas:service_catalog')
             
             if not verified:
                 messages.error(request, 'Nieprawidłowy lub wygasły kod weryfikacyjny.')

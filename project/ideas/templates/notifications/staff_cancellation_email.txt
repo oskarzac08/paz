@@ -1,0 +1,19 @@
+Klient odwołał wizytę
+
+────────────────────────────────
+Klient: {{ client.get_full_name|default:reservation.customer_email }}
+{% if client.email %}Email: {{ client.email }}{% endif %}
+
+Usługa: {{ service.name }}
+Data: {{ reservation.start|date:"d.m.Y (l)" }}
+Godzina: {{ reservation.start|time:"H:i" }}
+────────────────────────────────
+
+{% if reservation.cancellation_reason %}Powód: {{ reservation.get_cancellation_reason_display }}
+{% endif %}
+{% if reservation.cancellation_note %}Notatka: {{ reservation.cancellation_note }}
+{% endif %}
+
+Slot jest teraz wolny i dostępny do rezerwacji.
+
+To jest automatyczne powiadomienie z systemu rezerwacji.

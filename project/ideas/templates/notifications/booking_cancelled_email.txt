@@ -1,0 +1,23 @@
+Witaj {{ user.first_name|default:"" }},
+
+Twoja wizyta została odwołana.
+
+────────────────────────────────
+📅 Data: {{ reservation.start|date:"d.m.Y (l)" }}
+🕐 Godzina: {{ reservation.start|time:"H:i" }}
+💇 Usługa: {{ service.name }}
+────────────────────────────────
+
+{% if cancelled_by_staff %}
+Powód: Wizyta została odwołana przez obsługę.
+{% if reservation.cancellation_note %}{{ reservation.cancellation_note }}{% endif %}
+{% else %}
+Twoje odwołanie zostało potwierdzone.
+{% if cancellation_reason %}Powód: {{ cancellation_reason }}{% endif %}
+{% endif %}
+
+{% if not cancelled_by_staff %}
+Chcesz umówić się ponownie? Zapraszamy do zarezerwowania nowego terminu.
+{% endif %}
+
+{{ site_name }}

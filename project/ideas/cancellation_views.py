@@ -259,6 +259,21 @@ def cancellation_success(request, reservation_id):
 def send_cancellation_notifications(reservation):
     """Wysyła powiadomienia o odwołaniu wizyty"""
     
+    # Użyj NotificationService dla zalogowanych użytkowników
+    if reservation.user:
+        try:
+            from .notification_service import NotificationService
+            NotificationService.send_cancellation_notification(
+                reservation, 
+                cancelled_by=reservation.cancelled_by
+            )
+            return  # NotificationService obsługuje też powiadomienia do obsługi
+        except Exception as e:
+            import logging
+            logging.error(f"Failed to send notification via NotificationService: {e}")
+            # Fallback do starego systemu poniżej
+    
+    # Fallback/legacy dla gości lub gdy NotificationService nie działa
     # E-mail do klienta
     customer_subject = f'Potwierdzenie odwołania wizyty - {reservation.service.name}'
     customer_context = {

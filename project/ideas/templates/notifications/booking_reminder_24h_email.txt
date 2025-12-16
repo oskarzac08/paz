@@ -1,0 +1,21 @@
+Witaj {{ user.first_name|default:"" }},
+
+Przypominamy o Twojej nadchodzącej wizycie:
+
+────────────────────────────────
+📅 Data: {{ start|date:"d.m.Y (l)" }}
+🕐 Godzina: {{ start|time:"H:i" }}
+💇 Usługa: {{ service.name }}
+⏱️ Czas trwania: {{ service.duration_minutes }} minut
+💰 Cena: {{ service.price }} PLN
+────────────────────────────────
+
+{% if hours_before >= 24 %}Wizyta odbędzie się jutro. {% else %}Wizyta odbędzie się za 2 godziny! {% endif %}
+
+Nie możesz się stawić?
+{% if cancellation_url %}Odwołaj wizytę: {{ cancellation_url }}
+{% endif %}
+Pamiętaj: Odwołanie wizyty jest możliwe do 24h przed terminem.
+
+Do zobaczenia!
+{{ site_name }}

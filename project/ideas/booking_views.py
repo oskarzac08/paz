@@ -16,7 +16,7 @@ import pytz
 import random
 import string
 
-from .models import Service, Reservation
+from .models import Service, Reservation, TimeSlot
 from .forms import (
     ServiceSelectForm, TermsAcceptanceForm, DateTimeSelectForm,
     GuestBookingForm, RegisterAndBookForm
@@ -30,15 +30,46 @@ def generate_confirmation_code():
 
 
 def check_slot_availability(service, start_dt, end_dt):
-    """Check if time slot is available"""
-    conflicts = Reservation.objects.filter(
+    """Check if time slot is available - sprawdza rezerwacje i TimeSlot"""
+    # Sprawdź konflikty z rezerwacjami
+    reservation_conflicts = Reservation.objects.filter(
         service=service,
         status__in=['pending', 'confirmed']
     ).filter(
         start__lt=end_dt,
         end__gt=start_dt
     )
-    return not conflicts.exists()
+    
+    if reservation_conflicts.exists():
+        return False
+    
+    # Sprawdź TimeSlot - czy istnieje dostępny slot lub czy jest zablokowany
+    # 1. Sprawdź sloty bez usługi (globalne blokady)
+    global_blocks = TimeSlot.objects.filter(
+        service__isnull=True,
+        status='blocked',
+        start__lt=end_dt,
+        end__gt=start_dt
+    )
+    
+    if global_blocks.exists():
+        return False
+    
+    # 2. Sprawdź sloty dla tej usługi
+    service_slots = TimeSlot.objects.filter(
+        service=service,
+        start__lt=end_dt,
+        end__gt=start_dt
+    )
+    
+    for slot in service_slots:
+        # Jeśli slot jest zablokowany lub zajęty - niedostępny
+        if slot.status in ['blocked', 'booked']:
+            return False
+        # Jeśli slot jest dostępny - OK
+        # Jeśli nie ma slotów - też OK (backward compatibility)
+    
+    return True
 
 
 def get_available_time_slots(request):
@@ -86,6 +117,69 @@ def get_available_time_slots(request):
         current_time = temp_dt.time()
     
     return JsonResponse({'slots': slots})
+
+
+def get_available_days(request):
+    """API endpoint to get available days for a given month and service"""
+    year = int(request.GET.get('year'))
+    month = int(request.GET.get('month'))  # 1-12
+    service_id = request.GET.get('service_id')
+    
+    if not year or not month or not service_id:
+        return JsonResponse({'error': 'Missing parameters'}, status=400)
+    
+    try:
+        service = Service.objects.get(id=service_id)
+    except Service.DoesNotExist:
+        return JsonResponse({'error': 'Service not found'}, status=400)
+    
+    # Oblicz pierwszy i ostatni dzień miesiąca
+    first_day = datetime.date(year, month, 1)
+    if month == 12:
+        last_day = datetime.date(year + 1, 1, 1) - datetime.timedelta(days=1)
+    else:
+        last_day = datetime.date(year, month + 1, 1) - datetime.timedelta(days=1)
+    
+    # Working hours
+    start_hour = 9
+    end_hour = 18
+    slot_interval = 30
+    tz = pytz.timezone(getattr(settings, 'TIME_ZONE', 'UTC'))
+    
+    available_days = []
+    current_date = first_day
+    today = timezone.now().date()
+    
+    while current_date <= last_day:
+        # Pomiń dni z przeszłości
+        if current_date < today:
+            current_date += datetime.timedelta(days=1)
+            continue
+        
+        # Sprawdź czy istnieje chociaż jeden dostępny slot w tym dniu
+        day_has_availability = False
+        current_time = datetime.time(start_hour, 0)
+        end_time = datetime.time(end_hour, 0)
+        
+        while current_time < end_time:
+            start_dt = tz.localize(datetime.datetime.combine(current_date, current_time))
+            end_dt = start_dt + datetime.timedelta(minutes=service.duration_minutes)
+            
+            if end_dt.time() <= end_time and start_dt > timezone.now():
+                if check_slot_availability(service, start_dt, end_dt):
+                    day_has_availability = True
+                    break
+            
+            temp_dt = datetime.datetime.combine(current_date, current_time)
+            temp_dt += datetime.timedelta(minutes=slot_interval)
+            current_time = temp_dt.time()
+        
+        if day_has_availability:
+            available_days.append(current_date.day)
+        
+        current_date += datetime.timedelta(days=1)
+    
+    return JsonResponse({'available_days': available_days})
 
 
 # Step 1: Select Service
@@ -275,6 +369,24 @@ def booking_step5_confirm(request):
         # Create reservation
         is_guest = request.session.get('booking_is_guest', False)
         
+        # Znajdź lub utwórz TimeSlot dla tej rezerwacji
+        timeslot = None
+        try:
+            # Spróbuj znaleźć dostępny TimeSlot
+            timeslot = TimeSlot.objects.filter(
+                service=service,
+                start=start_dt,
+                end=end_dt,
+                status='available'
+            ).first()
+            
+            if timeslot:
+                # Oznacz slot jako zajęty
+                timeslot.status = 'booked'
+                timeslot.save()
+        except Exception:
+            pass  # Jeśli nie ma TimeSlot, kontynuuj (backward compatibility)
+        
         if is_guest:
             guest_data = request.session.get('booking_guest_data', {})
             reservation = Reservation.objects.create(
@@ -289,8 +401,13 @@ def booking_step5_confirm(request):
                 status='confirmed',
                 is_guest=True,
                 confirmation_code=generate_confirmation_code(),
-                notes=guest_data.get('notes', '')
+                notes=guest_data.get('notes', ''),
+                timeslot=timeslot
             )
+            
+            # NOTE: Goście nie otrzymują powiadomień przez NotificationService
+            # (wymaga user object). Stary system email jest używany poniżej.
+            
         else:
             # Registered user
             # Safely get phone number from profile if it exists
@@ -310,10 +427,21 @@ def booking_step5_confirm(request):
                 end=end_dt,
                 status='confirmed',
                 is_guest=False,
-                confirmation_code=generate_confirmation_code()
+                confirmation_code=generate_confirmation_code(),
+                timeslot=timeslot
             )
+            
+            # Wyślij powiadomienie przez NotificationService (dla zalogowanych użytkowników)
+            try:
+                from .notification_service import NotificationService
+                NotificationService.send_booking_confirmation(reservation)
+                # Powiadom też obsługę
+                NotificationService.send_staff_new_booking_notification(reservation)
+            except Exception as e:
+                import logging
+                logging.error(f"Failed to send notification: {e}")
         
-        # Send confirmation email
+        # Send confirmation email (fallback/legacy dla gości)
         try:
             subject = f"Potwierdzenie rezerwacji - {service.name}"
             context = {

@@ -139,7 +139,7 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/ideas/'
+LOGIN_REDIRECT_URL = '/landing/'
 LOGOUT_REDIRECT_URL = '/'
 
 # Weryfikacja dwukanałowa - ustawienia
@@ -207,3 +207,54 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 
 # Activation link validity duration (in minutes)
 ACTIVATION_LINK_EXPIRATION_MINUTES = 3
+
+# ============================================
+# CELERY CONFIGURATION
+# ============================================
+
+# Celery broker URL (Redis in production, może być RabbitMQ)
+# W development można użyć django-celery-results do przechowywania w bazie
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Wymaga Redis: redis-server
+# Alternatywnie dla MVP bez Redis:
+# CELERY_BROKER_URL = 'memory://'  # In-memory (tylko dla development, nie dla produkcji)
+
+# Celery result backend
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+# Alternatywnie:
+# CELERY_RESULT_BACKEND = 'django-db'  # Wymaga: pip install django-celery-results
+
+# Celery task settings
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Europe/Warsaw'
+CELERY_ENABLE_UTC = True
+
+# Task execution settings
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
+CELERY_TASK_SOFT_TIME_LIMIT = 25 * 60  # 25 minutes
+
+# ============================================
+# NOTIFICATIONS CONFIGURATION
+# ============================================
+
+# Site name dla powiadomień
+SITE_NAME = 'System Rezerwacji'
+
+# Email settings (już istniejące, rozszerzone)
+# W produkcji użyj prawdziwego SMTP
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER')
+# EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD')
+
+# SMS Backend configuration (Twilio)
+# TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID', '')
+# TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN', '')
+# TWILIO_PHONE_NUMBER = os.environ.get('TWILIO_PHONE_NUMBER', '')
+
+# Notification settings
+NOTIFICATION_RETENTION_DAYS = 90  # Ile dni przechowywać powiadomienia

@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ reservation.service.name }} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-card {
+        background: white;
+        border-radius: 8px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f0f0f0;
+    }
+    
+    .detail-header h1 {
+        margin: 0;
+        color: #333;
+    }
+    
+    .status-badge {
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    
+    .status-confirmed {
+        background: #e8f5e9;
+        color: #388e3c;
+    }
+    
+    .status-completed {
+        background: #e3f2fd;
+        color: #1976d2;
+    }
+    
+    .status-cancelled {
+        background: #ffebee;
+        color: #c62828;
+    }
+    
+    .status-pending {
+        background: #fff9c4;
+        color: #f57f17;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .info-section h3 {
+        margin: 0 0 1rem 0;
+        color: #666;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .info-item {
+        margin-bottom: 1rem;
+    }
+    
+    .info-label {
+        color: #888;
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .info-value {
+        color: #333;
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+    
+    .service-description {
+        background: #f9f9f9;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    
+    .service-description h3 {
+        margin: 0 0 1rem 0;
+        color: #333;
+    }
+    
+    .service-description p {
+        margin: 0;
+        color: #666;
+        line-height: 1.6;
+    }
+    
+    .cancellation-info {
+        background: #fff3e0;
+        border-left: 4px solid #f57c00;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    
+    .cancellation-info h4 {
+        margin: 0 0 0.5rem 0;
+        color: #e65100;
+    }
+    
+    .cancellation-info p {
+        margin: 0;
+        color: #666;
+    }
+    
+    .actions-bar {
+        background: #f5f5f5;
+        padding: 1.5rem;
+        border-radius: 8px;
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: inline-block;
+    }
+    
+    .btn-primary {
+        background: #1976d2;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background: #1565c0;
+        color: white;
+    }
+    
+    .btn-success {
+        background: #388e3c;
+        color: white;
+    }
+    
+    .btn-success:hover {
+        background: #2e7d32;
+        color: white;
+    }
+    
+    .btn-danger {
+        background: #d32f2f;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background: #c62828;
+    }
+    
+    .btn-secondary {
+        background: white;
+        color: #333;
+        border: 2px solid #ddd;
+    }
+    
+    .btn-secondary:hover {
+        background: #f5f5f5;
+        border-color: #bbb;
+    }
+    
+    .staff-notes-info {
+        background: #e3f2fd;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 2rem;
+        font-size: 0.9rem;
+        color: #666;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 900px; margin: 2rem auto; padding: 0 1rem;">
+    <div class="detail-card">
+        <!-- Header -->
+        <div class="detail-header">
+            <div>
+                <h1>{{ reservation.service.name }}</h1>
+                <p style="color: #666; margin: 0.5rem 0 0 0;">
+                    {{ reservation.service.category.name|default:"Bez kategorii" }}
+                </p>
+            </div>
+            <span class="status-badge status-{{ reservation.status }}">
+                {{ reservation.get_status_display }}
+            </span>
+        </div>
+        
+        <!-- Service Description -->
+        {% if reservation.service.description %}
+            <div class="service-description">
+                <h3>Opis usługi</h3>
+                <p>{{ reservation.service.description }}</p>
+            </div>
+        {% endif %}
+        
+        <!-- Info Grid -->
+        <div class="info-grid">
+            <!-- Date & Time -->
+            <div class="info-section">
+                <h3>📅 Data i Czas</h3>
+                <div class="info-item">
+                    <div class="info-label">Data wizyty</div>
+                    <div class="info-value">{{ reservation.start|date:"l, d F Y" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Godzina</div>
+                    <div class="info-value">{{ reservation.start|time:"H:i" }}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Czas trwania</div>
+                    <div class="info-value">{{ reservation.service.duration }} minut</div>
+                </div>
+            </div>
+            
+            <!-- Service Details -->
+            <div class="info-section">
+                <h3>💰 Szczegóły Usługi</h3>
+                <div class="info-item">
+                    <div class="info-label">Cena</div>
+                    <div class="info-value">{{ reservation.service.price }} zł</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Data rezerwacji</div>
+                    <div class="info-value">{{ reservation.created_at|date:"d.m.Y H:i" }}</div>
+                </div>
+                {% if reservation.updated_at != reservation.created_at %}
+                    <div class="info-item">
+                        <div class="info-label">Ostatnia aktualizacja</div>
+                        <div class="info-value">{{ reservation.updated_at|date:"d.m.Y H:i" }}</div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Cancellation Info -->
+        {% if reservation.status == 'cancelled' %}
+            <div class="cancellation-info">
+                <h4>⚠️ Wizyta odwołana</h4>
+                <p>
+                    <strong>Data odwołania:</strong> {{ reservation.cancelled_at|date:"d.m.Y H:i" }}
+                </p>
+                {% if reservation.cancellation_reason %}
+                    <p style="margin-top: 0.5rem;">
+                        <strong>Powód:</strong> {{ reservation.cancellation_reason }}
+                    </p>
+                {% endif %}
+                {% if reservation.cancellation_note %}
+                    <p style="margin-top: 0.5rem;">
+                        <strong>Dodatkowa informacja:</strong> {{ reservation.cancellation_note }}
+                    </p>
+                {% endif %}
+            </div>
+        {% endif %}
+        
+        <!-- Staff Notes Info (for transparency) -->
+        {% if staff_notes_count > 0 %}
+            <div class="staff-notes-info">
+                ℹ️ Do tej wizyty dodano {{ staff_notes_count }} notatk{{ staff_notes_count|pluralize:"ę,i,ek" }} 
+                obsługi (widoczne tylko dla personelu).
+            </div>
+        {% endif %}
+        
+        <!-- Actions -->
+        <div class="actions-bar">
+            <!-- Re-book button (for completed reservations) -->
+            {% if reservation.status == 'completed' %}
+                <a href="{% url 'ideas:rebook_service' reservation.id %}" class="btn btn-success">
+                    🔄 Zarezerwuj ponownie
+                </a>
+            {% endif %}
+            
+            <!-- Cancel button (for upcoming reservations) -->
+            {% if can_cancel %}
+                <a href="{% url 'ideas:cancel_reservation' reservation.id %}" 
+                   class="btn btn-danger"
+                   onclick="return confirm('Czy na pewno chcesz odwołać tę wizytę?');">
+                    ❌ Odwołaj wizytę
+                </a>
+            {% endif %}
+            
+            <!-- Back to history -->
+            <a href="{% url 'ideas:my_reservations' %}" class="btn btn-secondary">
+                ← Powrót do historii
+            </a>
+            
+            <!-- Back to profile -->
+            <a href="{% url 'ideas:my_profile' %}" class="btn btn-secondary">
+                👤 Mój profil
+            </a>
+        </div>
+    </div>
+    
+    <!-- Re-booking Info Box -->
+    {% if rebook_data and reservation.status == 'completed' %}
+        <div class="detail-card" style="background: #f0f9ff; border: 2px solid #1976d2;">
+            <h3 style="margin: 0 0 1rem 0; color: #1976d2;">
+                💡 Podobała Ci się ta usługa?
+            </h3>
+            <p style="margin: 0 0 1rem 0; color: #666;">
+                Zarezerwuj {{ rebook_data.service_name }} ponownie jednym kliknięciem!
+            </p>
+            <a href="{% url 'ideas:rebook_service' reservation.id %}" class="btn btn-primary">
+                🔄 Szybka rezerwacja
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -247,13 +247,13 @@
             <div class="nav-center">
                 <div class="nav-menu-label">menu</div>
                 <div class="nav-links">
+                    <a href="{% url 'ideas:service_catalog' %}">Usługi</a>
                     <a href="#cennik">Cennik</a>
                     {% if user.is_authenticated %}
                         <a href="{% url 'ideas:my_reservations' %}">Moje wizyty</a>
-                        <a href="/admin/">Admin</a>
+                    {% else %}
+                        <a href="{% url 'ideas:login' %}">Logowanie</a>
                     {% endif %}
-                    <a href="{% url 'ideas:login' %}">Logowanie</a>
-                    <a href="{% url 'ideas:register' %}">Rejestracja</a>
                 </div>
             </div>
             
@@ -263,7 +263,7 @@
                     <button type="submit" class="nav-button">Wyloguj</button>
                 </form>
             {% else %}
-                <a href="{% url 'ideas:booking_step1_service' %}" class="nav-button">Rezerwacja</a>
+                <a href="{% url 'ideas:register' %}" class="nav-button">Rejestracja</a>
             {% endif %}
         </nav>
         

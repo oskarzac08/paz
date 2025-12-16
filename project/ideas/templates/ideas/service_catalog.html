@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Nasze usługi - Katalog{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/service_catalog.css' %}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="catalog-container">
+    <div class="catalog-header">
+        <h1>Nasze usługi</h1>
+        <p class="subtitle">Odkryj profesjonalne usługi dopasowane do Twoich potrzeb</p>
+    </div>
+
+    <div class="catalog-layout">
+        <!-- Sidebar z filtrami -->
+        <aside class="filters-sidebar">
+            <div class="filters-header">
+                <h3>Filtry</h3>
+                {% if current_filters.category or current_filters.min_price or current_filters.max_price or current_filters.duration or current_filters.search %}
+                <a href="{% url 'ideas:service_catalog' %}" class="btn-reset-filters">Wyczyść</a>
+                {% endif %}
+            </div>
+
+            <!-- Wyszukiwanie -->
+            <div class="filter-section">
+                <label for="search">Szukaj usługi</label>
+                <input type="text" id="search" name="q" placeholder="Wpisz nazwę..." value="{{ current_filters.search }}">
+            </div>
+
+            <!-- Kategorie -->
+            {% if categories %}
+            <div class="filter-section">
+                <label>Kategoria</label>
+                <div class="category-filters">
+                    <button class="category-btn {% if not current_filters.category %}active{% endif %}" data-category="">
+                        Wszystkie ({{ result_count }})
+                    </button>
+                    {% for category in categories %}
+                    <button class="category-btn {% if current_filters.category == category.slug %}active{% endif %}" 
+                            data-category="{{ category.slug }}">
+                        {{ category.name }} ({{ category.service_count }})
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Zakres cenowy -->
+            <div class="filter-section">
+                <label>Cena (PLN)</label>
+                <div class="price-inputs">
+                    <input type="number" id="min_price" name="min_price" 
+                           placeholder="Od" min="0" value="{{ current_filters.min_price }}">
+                    <span>-</span>
+                    <input type="number" id="max_price" name="max_price" 
+                           placeholder="Do" value="{{ current_filters.max_price }}">
+                </div>
+                {% if price_stats.min_price and price_stats.max_price %}
+                <small class="price-range-hint">
+                    Dostępne: {{ price_stats.min_price }} - {{ price_stats.max_price }} PLN
+                </small>
+                {% endif %}
+            </div>
+
+            <!-- Czas trwania -->
+            <div class="filter-section">
+                <label>Czas trwania</label>
+                <div class="duration-filters">
+                    <label class="radio-label">
+                        <input type="radio" name="duration" value="" {% if not current_filters.duration %}checked{% endif %}>
+                        Dowolny
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="duration" value="short" {% if current_filters.duration == 'short' %}checked{% endif %}>
+                        Do 30 min
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="duration" value="medium" {% if current_filters.duration == 'medium' %}checked{% endif %}>
+                        30-60 min
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="duration" value="long" {% if current_filters.duration == 'long' %}checked{% endif %}>
+                        Powyżej 60 min
+                    </label>
+                </div>
+            </div>
+
+            <button class="btn-apply-filters">Zastosuj filtry</button>
+        </aside>
+
+        <!-- Główna zawartość -->
+        <main class="catalog-main">
+            <!-- Sortowanie i licznik wyników -->
+            <div class="catalog-controls">
+                <div class="results-count">
+                    Znaleziono: <strong>{{ result_count }}</strong> {% if result_count == 1 %}usługa{% elif result_count < 5 %}usługi{% else %}usług{% endif %}
+                </div>
+                <div class="sort-controls">
+                    <label for="sort">Sortuj:</label>
+                    <select id="sort" name="sort">
+                        <option value="order" {% if current_filters.sort == 'order' %}selected{% endif %}>Domyślnie</option>
+                        <option value="name" {% if current_filters.sort == 'name' %}selected{% endif %}>Alfabetycznie</option>
+                        <option value="price_asc" {% if current_filters.sort == 'price_asc' %}selected{% endif %}>Cena rosnąco</option>
+                        <option value="price_desc" {% if current_filters.sort == 'price_desc' %}selected{% endif %}>Cena malejąco</option>
+                        <option value="duration" {% if current_filters.sort == 'duration' %}selected{% endif %}>Czas trwania</option>
+                        <option value="popular" {% if current_filters.sort == 'popular' %}selected{% endif %}>Najpopularniejsze</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Siatka usług -->
+            <div class="services-grid">
+                {% for service in services %}
+                <div class="service-card" data-service-id="{{ service.id }}">
+                    <div class="service-image">
+                        {% if service.primary_image %}
+                            <img src="{{ service.primary_image.image.url }}" 
+                                 alt="{{ service.primary_image.alt_text|default:service.name }}" 
+                                 loading="lazy">
+                        {% else %}
+                            <div class="service-placeholder" style="background-color: {{ service.color }}20;">
+                                {% if service.icon %}
+                                <i class="fas {{ service.icon }}" style="color: {{ service.color }}; font-size: 3rem;"></i>
+                                {% else %}
+                                <i class="fas fa-spa" style="color: {{ service.color }}; font-size: 3rem;"></i>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                        {% if service.booking_count > 10 %}
+                        <span class="badge-popular">Popularne</span>
+                        {% endif %}
+                    </div>
+                    <div class="service-content">
+                        <h3 class="service-name">
+                            {% if service.icon %}
+                            <i class="fas {{ service.icon }}" style="color: {{ service.color }};"></i>
+                            {% endif %}
+                            {{ service.name }}
+                        </h3>
+                        <p class="service-description">
+                            {{ service.description_short|default:service.description|truncatewords:15 }}
+                        </p>
+                        <div class="service-meta">
+                            <span class="meta-duration">
+                                <i class="far fa-clock"></i> {{ service.duration_minutes }} min
+                            </span>
+                            <span class="meta-price">
+                                {{ service.price }} PLN
+                            </span>
+                        </div>
+                        <div class="service-actions">
+                            <a href="{% url 'ideas:service_detail' service.id %}" class="btn-detail">
+                                Zobacz więcej
+                            </a>
+                            <a href="{% url 'ideas:booking_step1_service' %}?service_id={{ service.id }}" class="btn-book">
+                                Zarezerwuj
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="no-results">
+                    <i class="fas fa-search" style="font-size: 3rem; color: #ccc;"></i>
+                    <p>Nie znaleziono usług spełniających wybrane kryteria.</p>
+                    <a href="{% url 'ideas:service_catalog' %}" class="btn-reset">Wyczyść filtry</a>
+                </div>
+                {% endfor %}
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/service_catalog.js' %}"></script>
+{% endblock %}

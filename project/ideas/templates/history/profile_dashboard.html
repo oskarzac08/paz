@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Mój Profil - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .stats-card h3 {
+        margin: 0 0 1rem 0;
+        color: #333;
+        font-size: 1.1rem;
+    }
+    
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .stat-row:last-child {
+        border-bottom: none;
+    }
+    
+    .stat-label {
+        color: #666;
+    }
+    
+    .stat-value {
+        font-weight: bold;
+        color: #333;
+    }
+    
+    .segment-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+    
+    .segment-new {
+        background: #e3f2fd;
+        color: #1976d2;
+    }
+    
+    .segment-regular {
+        background: #e8f5e9;
+        color: #388e3c;
+    }
+    
+    .segment-vip {
+        background: #fff3e0;
+        color: #f57c00;
+    }
+    
+    .segment-at-risk {
+        background: #fff9c4;
+        color: #f57f17;
+    }
+    
+    .segment-problematic {
+        background: #ffebee;
+        color: #c62828;
+    }
+    
+    .recent-reservations {
+        margin-top: 1.5rem;
+    }
+    
+    .reservation-item {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .reservation-info h4 {
+        margin: 0 0 0.5rem 0;
+        color: #333;
+    }
+    
+    .reservation-info p {
+        margin: 0;
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .status-confirmed {
+        background: #e8f5e9;
+        color: #388e3c;
+    }
+    
+    .status-completed {
+        background: #e3f2fd;
+        color: #1976d2;
+    }
+    
+    .status-cancelled {
+        background: #ffebee;
+        color: #c62828;
+    }
+    
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .action-button {
+        display: block;
+        text-align: center;
+        padding: 1rem;
+        background: #1976d2;
+        color: white;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: background 0.3s;
+    }
+    
+    .action-button:hover {
+        background: #1565c0;
+        color: white;
+    }
+    
+    .action-button.secondary {
+        background: #757575;
+    }
+    
+    .action-button.secondary:hover {
+        background: #616161;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1200px; margin: 2rem auto; padding: 0 1rem;">
+    <h1>Witaj, {{ user.first_name|default:user.username }}!</h1>
+    
+    <!-- Customer Segment Badge -->
+    <div style="margin-bottom: 2rem;">
+        <span class="segment-badge segment-{{ profile.customer_segment }}">
+            {{ segment_badge }}
+        </span>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <!-- Visit Statistics -->
+        <div class="stats-card">
+            <h3>📊 Statystyki wizyt</h3>
+            <div class="stat-row">
+                <span class="stat-label">Całkowita liczba wizyt:</span>
+                <span class="stat-value">{{ stats.total_visits }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Ukończone wizyty:</span>
+                <span class="stat-value">{{ stats.completed_visits }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Nadchodzące wizyty:</span>
+                <span class="stat-value">{{ stats.upcoming_visits }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Odwołane wizyty:</span>
+                <span class="stat-value">{{ stats.cancelled_visits }}</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Wskaźnik realizacji:</span>
+                <span class="stat-value">{{ stats.completion_rate }}%</span>
+            </div>
+        </div>
+        
+        <!-- Spending Statistics -->
+        <div class="stats-card">
+            <h3>💰 Statystyki wydatków</h3>
+            <div class="stat-row">
+                <span class="stat-label">Łącznie wydano:</span>
+                <span class="stat-value">{{ stats.total_spent }} zł</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Średni koszt wizyty:</span>
+                <span class="stat-value">{{ stats.average_spent }} zł</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Ostatnia wizyta:</span>
+                <span class="stat-value">
+                    {% if stats.last_visit_date %}
+                        {{ stats.last_visit_date|date:"d.m.Y" }}
+                    {% else %}
+                        Brak danych
+                    {% endif %}
+                </span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Następna wizyta:</span>
+                <span class="stat-value">
+                    {% if stats.next_visit_date %}
+                        {{ stats.next_visit_date|date:"d.m.Y" }}
+                    {% else %}
+                        Brak zaplanowanej
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        
+        <!-- Preferences -->
+        <div class="stats-card">
+            <h3>⭐ Twoje preferencje</h3>
+            <div class="stat-row">
+                <span class="stat-label">Ulubiona usługa:</span>
+                <span class="stat-value">
+                    {% if profile.favorite_service %}
+                        {{ profile.favorite_service.name }}
+                    {% else %}
+                        Brak danych
+                    {% endif %}
+                </span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Częstotliwość wizyt:</span>
+                <span class="stat-value">
+                    {% if profile.average_visit_interval %}
+                        co {{ profile.average_visit_interval }} dni
+                    {% else %}
+                        Brak danych
+                    {% endif %}
+                </span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Czas jako klient:</span>
+                <span class="stat-value">{{ stats.days_as_customer }} dni</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Reservations -->
+    <div class="recent-reservations">
+        <h2>Ostatnie rezerwacje</h2>
+        
+        {% if recent_reservations %}
+            {% for reservation in recent_reservations %}
+                <div class="reservation-item">
+                    <div class="reservation-info">
+                        <h4>{{ reservation.service.name }}</h4>
+                        <p>
+                            📅 {{ reservation.start|date:"d.m.Y" }} o {{ reservation.start|time:"H:i" }}
+                            {% if reservation.service.category %}
+                                | {{ reservation.service.category.name }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        <span class="status-badge status-{{ reservation.status }}">
+                            {{ reservation.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p style="color: #666; text-align: center; padding: 2rem;">
+                Nie masz jeszcze żadnych rezerwacji.
+            </p>
+        {% endif %}
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <a href="{% url 'ideas:service_catalog' %}" class="action-button">
+            📅 Zarezerwuj wizytę
+        </a>
+        <a href="{% url 'ideas:my_reservations' %}" class="action-button secondary">
+            📜 Pełna historia
+        </a>
+        <a href="{% url 'ideas:my_statistics' %}" class="action-button secondary">
+            📊 Moje statystyki
+        </a>
+    </div>
+</div>
+{% endblock %}
