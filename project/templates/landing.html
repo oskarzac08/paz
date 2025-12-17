@@ -261,94 +261,26 @@
 <section id="cennik" class="pricing-section">
   <h2>Cennik</h2>
   <div class="pricing-content">
+    {% for category in categories %}
     <div class="pricing-category">
-      <h3>Manicure</h3>
+      <h3>{{ category.name }}</h3>
+      {% for service in category.services.all %}
       <div class="pricing-item">
         <div>
-          <span class="service-name">Manicure Higieniczny</span>
+          <span class="service-name">{{ service.name }}</span>
+          {% if service.description_short %}
+          <span class="service-description">{{ service.description_short|linebreaks }}</span>
+          {% endif %}
         </div>
-        <span class="service-price">100+ zł</span>
+        <span class="service-price">{{ service.price }}{% if service.price_varies %}+{% endif %} zł</span>
       </div>
-      <div class="pricing-item">
-        <div>
-          <span class="service-name">Manicure Japoński</span>
-          <span class="service-description">Ściągnięcie żelu/hybrydy po innym salonie + 20 zł do ceny</span>
-        </div>
-        <span class="service-price">130 zł</span>
-      </div>
-      <div class="pricing-item">
-        <div>
-          <span class="service-name">Manicure Hybrydowy</span>
-          <span class="service-description">Jeden Kolor<br>French / Babyboomer / Ombre + 20 zł</span>
-        </div>
-        <span class="service-price">150 zł</span>
-      </div>
-      <div class="pricing-item">
-        <div>
-          <span class="service-name">Manicure Żelowy</span>
-          <span class="service-description">Jeden Kolor<br>French / Babyboomer / Ombre + 20 zł</span>
-        </div>
-        <span class="service-price">170+ zł</span>
-      </div>
+      {% endfor %}
     </div>
-    
+    {% empty %}
     <div class="pricing-category">
-      <h3>Pedicure</h3>
-      <div class="pricing-item">
-        <div>
-          <span class="service-name">Pedicure higieniczny</span>
-        </div>
-        <span class="service-price">150 zł</span>
-      </div>
-      <div class="pricing-item">
-        <div>
-          <span class="service-name">Pedicure hybrydowy tylko palce</span>
-        </div>
-        <span class="service-price">150 zł</span>
-      </div>
-      <div class="pricing-item">
-        <div>
-          <span class="service-name">Pedicure hybrydowy + stopa</span>
-        </div>
-        <span class="service-price">190+ zł</span>
-      </div>
+      <p style="text-align: center; color: #999;">Brak dostępnych usług</p>
     </div>
-    
-    <div class="pricing-category">
-      <h3>Przedłużanie / Uzupełnienie</h3>
-      <div class="pricing-item">
-        <div>
-          <span class="service-name">Przedłużanie Paznokci Żelem</span>
-          <span class="service-description">Jeden Kolor<br>French / Babyboomer / Ombre + 20 zł</span>
-        </div>
-        <span class="service-price">200+ zł</span>
-      </div>
-      <div class="pricing-item">
-        <div>
-          <span class="service-name">Uzupełnienie Paznokci Żelowych</span>
-          <span class="service-description">Jeden Kolor<br>French / Babyboomer / Ombre + 20 zł</span>
-        </div>
-        <span class="service-price">180+ zł</span>
-      </div>
-    </div>
-    
-    <div class="pricing-category">
-      <h3>Dodatkowe Usługi</h3>
-      <div class="pricing-item">
-        <div>
-          <span class="service-name">Naprawa paznokci</span>
-          <span class="service-description">po nieprawidłowej stylizacji w innym salonie</span>
-        </div>
-        <span class="service-price">+20 zł</span>
-      </div>
-      <div class="pricing-item">
-        <div>
-          <span class="service-name">Ściągnięcie żelu</span>
-          <span class="service-description">Bez opracowania płytki paznokcia<br>Z opracowaniem płytki i skórek + 40 zł</span>
-        </div>
-        <span class="service-price">45 zł</span>
-      </div>
-    </div>
+    {% endfor %}
   </div>
 </section>
 

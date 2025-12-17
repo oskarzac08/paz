@@ -6,7 +6,8 @@ from .views import (
     register_view,
     verify_code_view,
     resend_verification_code,
-    verification_status_view
+    verification_status_view,
+    gallery_view
 )
 from . import views
 from . import booking_views
@@ -21,6 +22,7 @@ app_name = 'ideas'
 urlpatterns = [
     path('', views.home, name='home'),
     path('landing/', landing, name='landing'),
+    path('galeria/', gallery_view, name='gallery'),
     path('login/', LoginView.as_view(template_name='login.html'), name='login'),
     path('logout/', LogoutView.as_view(next_page='ideas:landing'), name='logout'),
     path('register/', register_view, name='register'),

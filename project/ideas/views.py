@@ -43,8 +43,30 @@ class IdeaListView(LoginRequiredMixin, ListView):
 
 
 def landing(request):
-    # simple landing page with two buttons: login and register
-    return render(request, 'landing.html')
+    """Landing page with services from database"""
+    from .models import ServiceCategory
+    from django.db.models import Prefetch
+    
+    # Pobierz kategorie z usługami
+    categories = ServiceCategory.objects.filter(
+        is_active=True,
+        services__is_active=True
+    ).distinct().prefetch_related(
+        Prefetch(
+            'services',
+            queryset=Service.objects.filter(is_active=True).order_by('order', 'name')
+        )
+    ).order_by('order', 'name')
+    
+    context = {
+        'categories': categories,
+    }
+    return render(request, 'landing.html', context)
+
+
+def gallery_view(request):
+    """Widok galerii prac"""
+    return render(request, 'ideas/gallery.html')
 
 
 def home(request):
